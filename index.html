@@ -229,8 +229,8 @@
             <rect x="496" y="16" width="928" height="788" rx="12" fill="#f59e0b" fill-opacity="0.05" stroke="#d97706" stroke-opacity="0.3" stroke-dasharray="6 4" />
             <text x="514" y="38" font-size="12.5" font-weight="bold" fill="#b45309">ฝั่งกำลังไฟฟ้ากระแสสลับ (RELAY MODULE, 220VAC/12VAC &amp; 12VAC LOADS)</text>
 
-            <!-- =========================================================================
-                 0. OLED 0.96" I2C DISPLAY (128x64 - รองรับ 6 บรรทัดเต็ม)
+           <!-- =========================================================================
+                 0. OLED 0.96" I2C DISPLAY (128x64 Pixel Accurate)
                  ========================================================================= -->
             <g id="oled-display" transform="translate(36, 56)" filter="url(#dropShadow)">
               <rect x="0" y="0" width="270" height="150" rx="8" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2.5" />
@@ -240,14 +240,9 @@
               <circle cx="11" cy="139" r="3.5" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
               <circle cx="259" cy="139" r="3.5" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
 
-              <!-- OLED Screen (6 Lines) -->
+              <!-- OLED Screen (128x64 viewBox สัดส่วนเหมือนจอจริง) -->
               <rect x="20" y="12" width="230" height="100" rx="4" fill="#050914" stroke="#334155" stroke-width="2" />
-              <text id="oled-line-1" x="28" y="27" font-size="10.5" font-weight="bold" fill="#38bdf8" class="code-font">OLED 0.96" 128x64 (6L)</text>
-              <text id="oled-line-2" x="28" y="42" font-size="10" fill="#e2e8f0" class="code-font">Line 2: STANDBY</text>
-              <text id="oled-line-3" x="28" y="57" font-size="10" fill="#e2e8f0" class="code-font">Line 3: Ready...</text>
-              <text id="oled-line-4" x="28" y="72" font-size="10" fill="#94a3b8" class="code-font">Line 4: -</text>
-              <text id="oled-line-5" x="28" y="87" font-size="10" fill="#94a3b8" class="code-font">Line 5: -</text>
-              <text id="oled-line-6" x="28" y="102" font-size="10" fill="#94a3b8" class="code-font">Line 6: -</text>
+              <svg id="oled-screen-svg" x="26" y="15" width="218" height="94" viewBox="0 0 128 64" preserveAspectRatio="none"></svg>
 
               <!-- I2C Header -->
               <rect x="65" y="122" width="140" height="22" rx="3" fill="#0f172a" />
@@ -256,7 +251,7 @@
               <text x="152" y="120" font-size="8" font-weight="bold" fill="#fde047" text-anchor="middle">SCL</text>
               <text x="185" y="120" font-size="8" font-weight="bold" fill="#86efac" text-anchor="middle">SDA</text>
             </g>
-
+            
             <!-- =========================================================================
                  1. หลอด LED 5mm (5V DC พร้อมตัวต้านทานในตัว - โซนไฟต่ำ)
                  ========================================================================= -->
@@ -778,6 +773,32 @@ void loop() {
     let isRunning = false;
     let runToken = 0;
 
+    // OLED 128x64 Pixel-Accurate State
+    let oledDrawItems = [];
+    let oledCursorX = 0;
+    let oledCursorY = 0;
+    let oledTextSize = 1;
+
+    function updateOLEDVisual(powered) {
+      const screenSvg = document.getElementById('oled-screen-svg');
+      if (!screenSvg) return;
+      screenSvg.innerHTML = '';
+      if (!powered) return;
+
+      oledDrawItems.forEach(item => {
+        const textEl = document.createElementNS(SVG_NS, 'text');
+        const fontSize = 8 * item.size;
+        textEl.setAttribute('x', item.x);
+        // ชดเชย baseline ของ SVG ให้ตรงกับพิกัดมุมซ้ายบน (y) ของ Adafruit_GFX
+        textEl.setAttribute('y', item.y + fontSize - 1);
+        textEl.setAttribute('font-size', fontSize);
+        textEl.setAttribute('fill', '#e2e8f0');
+        textEl.setAttribute('class', 'code-font');
+        textEl.textContent = item.text;
+        screenSvg.appendChild(textEl);
+      });
+    }
+    
     // OLED 6-Line Buffer
     let oledBuffer = ['', '', '', '', '', ''];
     let oledCursorLine = 0;
@@ -1354,19 +1375,20 @@ void loop() {
       return code.slice(start, i - 1);
     }
 
-   async function execStatements(block, vars, myToken) {
+  async function execStatements(block, vars, myToken) {
       const lines = block.split('\n');
       for (let raw of lines) {
         if (myToken !== runToken) return;
         const line = raw.replace(/\/\/.*$/, '').trim();
         if (!line) continue;
 
-        // ข้ามบรรทัดประกาศโครงสร้าง C++ ทั่วไป เพื่อให้เขียนโค้ดมาตรฐานได้ไม่ติดขัด
+        // ข้ามบรรทัดประกาศโครงสร้าง C++ ทั่วไป
         if (
           line.startsWith('#') ||
           line.startsWith('Adafruit_SSD1306') ||
           line.startsWith('if (!display.begin') ||
           line.startsWith('for (;;)') ||
+          line.startsWith('display.setTextColor') ||
           line === '}' ||
           line === '{'
         ) {
@@ -1404,35 +1426,63 @@ void loop() {
 
         // OLED: display.clearDisplay()
         if (/^display\.clearDisplay\s*\(\s*\)\s*;?$/.test(line)) {
-          oledBuffer = ['', '', '', '', '', ''];
-          oledCursorLine = 0;
+          oledDrawItems = [];
+          oledCursorX = 0;
+          oledCursorY = 0;
           continue;
         }
 
-        // OLED: display.setCursor(x, y)
+        // OLED: display.setTextSize(n)
+        m = line.match(/^display\.setTextSize\s*\(\s*(\d+)\s*\)\s*;?$/);
+        if (m) {
+          oledTextSize = Math.max(1, parseInt(m[1], 10));
+          continue;
+        }
+
+        // OLED: display.setCursor(x, y) — ใช้พิกัด 0-127 และ 0-63 จริง
         m = line.match(/^display\.setCursor\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)\s*;?$/);
         if (m) {
-          const y = parseInt(m[2], 10);
-          oledCursorLine = Math.min(5, Math.floor(y / 10));
+          oledCursorX = parseInt(m[1], 10);
+          oledCursorY = parseInt(m[2], 10);
           continue;
         }
 
         // OLED: รองรับทั้ง display.print("...") และ display.println("...")
         m = line.match(/^display\.(print|println)\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
         if (m) {
-          if (oledCursorLine < 6) {
-            oledBuffer[oledCursorLine] += m[2];
-            if (m[1] === 'println') oledCursorLine++;
+          const isPrintln = m[1] === 'println';
+          const text = m[2];
+          oledDrawItems.push({
+            x: oledCursorX,
+            y: oledCursorY,
+            size: oledTextSize,
+            text: text
+          });
+          if (isPrintln) {
+            oledCursorX = 0;
+            oledCursorY += 8 * oledTextSize; // ขึ้นบรรทัดใหม่ทีละ 8px เหมือน Adafruit_GFX จริง
+          } else {
+            oledCursorX += text.length * 6 * oledTextSize; // เลื่อนเคอร์เซอร์ขวาตัวละ 6px
           }
           continue;
         }
 
-        // OLED: รองรับการแสดงค่าตัวแปร เช่น display.print(count) หรือ display.println(val)
+        // OLED: รองรับการแสดงค่าตัวแปร เช่น display.print(val)
         m = line.match(/^display\.(print|println)\s*\(\s*([a-zA-Z_]\w*)\s*\)\s*;?$/);
         if (m && vars[m[2]] !== undefined) {
-          if (oledCursorLine < 6) {
-            oledBuffer[oledCursorLine] += String(vars[m[2]]);
-            if (m[1] === 'println') oledCursorLine++;
+          const isPrintln = m[1] === 'println';
+          const text = String(vars[m[2]]);
+          oledDrawItems.push({
+            x: oledCursorX,
+            y: oledCursorY,
+            size: oledTextSize,
+            text: text
+          });
+          if (isPrintln) {
+            oledCursorX = 0;
+            oledCursorY += 8 * oledTextSize;
+          } else {
+            oledCursorX += text.length * 6 * oledTextSize;
           }
           continue;
         }
