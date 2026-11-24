@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>วาด Arduino Uno R3 เองด้วย SVG</title>
+  <style>
+    body {
+      background: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    .canvas-box {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      max-width: 960px;
+      width: 100%;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .pin-socket {
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    .pin-socket:hover circle {
+      stroke: #facc15;
+      stroke-width: 2.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas-box">
+    <svg id="unoCanvas" viewBox="0 0 800 500">
+      <defs>
+        <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="1" />
+        </pattern>
+      </defs>
+      <rect width="800" height="500" fill="url(#smallGrid)" rx="8" />
+
+      <!-- ==================== กลุ่มบอร์ด ARDUINO UNO R3 (วาดใหม่เอง) ==================== -->
+      <g id="arduino-uno-r3" transform="translate(210, 110)">
+        <!-- ตัวบอร์ดหลัก (มีรอยบากด้านขวาบนและขวาล่าง) -->
+        <path
+          d="M 15 0
+             H 335
+             L 355 20
+             V 220
+             L 335 240
+             H 15
+             A 15 15 0 0 1 0 225
+             V 15
+             A 15 15 0 0 1 15 0 Z"
+          fill="#00878F"
+          stroke="#005B61"
+          stroke-width="3"
+        />
+
+        <!-- รูยึดน็อตมุมบอร์ด 4 มุม -->
+        <circle cx="24" cy="24" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+        <circle cx="24" cy="216" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+        <circle cx="326" cy="40" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+        <circle cx="326" cy="200" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+
+        <!-- พอร์ต USB-B ด้านซ้ายบน -->
+        <rect x="-18" y="28" width="62" height="56" rx="4" fill="#cbd5e1" stroke="#475569" stroke-width="2.5" />
+        <rect x="-12" y="34" width="50" height="44" rx="2" fill="#94a3b8" />
+        <text x="13" y="60" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">USB</text>
+
+        <!-- แจ็กไฟ DC ด้านซ้ายล่าง -->
+        <rect x="-16" y="132" width="68" height="54" rx="5" fill="#1e293b" stroke="#0f172a" stroke-width="2.5" />
+        <circle cx="18" cy="159" r="14" fill="#0f172a" stroke="#475569" stroke-width="2" />
+        <circle cx="18" cy="159" r="5" fill="#cbd5e1" />
+
+        <!-- ชิปหลัก ATmega328P (DIP-28) -->
+        <rect x="135" y="102" width="130" height="36" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2" />
+        <circle cx="143" cy="120" r="4" fill="#334155" />
+        <text x="205" y="124" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">ATMEGA328P</text>
+
+        <!-- ปุ่ม RESET สีแดง -->
+        <rect x="68" y="106" width="22" height="22" rx="3" fill="#cbd5e1" stroke="#475569" stroke-width="1.5" />
+        <circle cx="79" cy="117" r="7" fill="#dc2626" />
+
+        <!-- ไฟ LED แสดงสถานะ -->
+        <circle cx="112" cy="82" r="4" fill="#22c55e" />
+        <text x="112" y="74" font-size="8" fill="#ffffff" text-anchor="middle">ON</text>
+
+        <circle cx="285" cy="66" r="4" fill="#facc15" />
+        <text x="285" y="58" font-size="8" fill="#ffffff" text-anchor="middle">L</text>
+
+        <!-- ข้อความบนบอร์ด -->
+        <text x="205" y="84" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">ARDUINO</text>
+        <text x="205" y="164" font-size="11" font-weight="bold" fill="#a7f3d0" text-anchor="middle">UNO REV3</text>
+
+        <!-- แถบ Header ด้านบน (DIGITAL) -->
+        <rect x="86" y="14" width="224" height="20" rx="2" fill="#0f172a" />
+        <!-- แถบ Header ด้านล่าง (POWER & ANALOG) -->
+        <rect x="86" y="206" width="98" height="20" rx="2" fill="#0f172a" />
+        <rect x="204" y="206" width="98" height="20" rx="2" fill="#0f172a" />
+
+        <!-- ชั้นรูเสียบพินที่สร้างด้วย JavaScript ให้ตรงระยะเป๊ะ -->
+        <g id="boardPinsGroup"></g>
+      </g>
+    </svg>
+  </div>
+
+  <script>
+    // กำหนดพินสำคัญบนแถบบนและแถบล่าง (พิกัดอ้างอิงภายในกลุ่มบอร์ด arduino-uno-r3)
+    const TOP_PINS = [
+      { id: 'D13', label: 'Digital 13', x: 96,  y: 24, color: '#fde047' },
+      { id: 'D12', label: 'Digital 12', x: 112, y: 24, color: '#fde047' },
+      { id: 'D11', label: 'Digital 11', x: 128, y: 24, color: '#fde047' },
+      { id: 'D10', label: 'Digital 10', x: 144, y: 24, color: '#fde047' },
+      { id: 'D9',  label: 'Digital 9',  x: 160, y: 24, color: '#fde047' },
+      { id: 'D8',  label: 'Digital 8',  x: 176, y: 24, color: '#fde047' },
+      { id: 'D7',  label: 'Digital 7',  x: 204, y: 24, color: '#e2e8f0' },
+      { id: 'D6',  label: 'Digital 6',  x: 220, y: 24, color: '#e2e8f0' },
+      { id: 'D5',  label: 'Digital 5',  x: 236, y: 24, color: '#e2e8f0' },
+      { id: 'D4',  label: 'Digital 4',  x: 252, y: 24, color: '#e2e8f0' },
+      { id: 'D3',  label: 'Digital 3',  x: 268, y: 24, color: '#e2e8f0' },
+      { id: 'D2',  label: 'Digital 2',  x: 284, y: 24, color: '#e2e8f0' },
+      { id: 'GND_TOP', label: 'GND',    x: 300, y: 24, color: '#60a5fa' }
+    ];
+
+    const BOTTOM_PINS = [
+      { id: '5V',  label: '5V',         x: 138, y: 216, color: '#f87171' },
+      { id: 'GND1',label: 'GND',        x: 154, y: 216, color: '#60a5fa' },
+      { id: 'GND2',label: 'GND',        x: 170, y: 216, color: '#60a5fa' },
+      { id: 'A0',  label: 'Analog A0',  x: 214, y: 216, color: '#86efac' },
+      { id: 'A1',  label: 'Analog A1',  x: 230, y: 216, color: '#86efac' },
+      { id: 'A2',  label: 'Analog A2',  x: 246, y: 216, color: '#86efac' },
+      { id: 'A3',  label: 'Analog A3',  x: 262, y: 216, color: '#86efac' },
+      { id: 'A4',  label: 'Analog A4',  x: 278, y: 216, color: '#86efac' },
+      { id: 'A5',  label: 'Analog A5',  x: 294, y: 216, color: '#86efac' }
+    ];
+
+    const pinsGroup = document.getElementById('boardPinsGroup');
+
+    function drawSocket(pin, isTop) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'pin-socket');
+
+      // รูเสียบพิน
+      const hole = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      hole.setAttribute('cx', pin.x);
+      hole.setAttribute('cy', pin.y);
+      hole.setAttribute('r', '4.2');
+      hole.setAttribute('fill', pin.color);
+      hole.setAttribute('stroke', '#94a3b8');
+      hole.setAttribute('stroke-width', '1.2');
+
+      // ป้ายชื่อขาพินบนตัวบอร์ด
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', pin.x);
+      label.setAttribute('y', isTop ? pin.y + 18 : pin.y - 12);
+      label.setAttribute('font-size', '7.5');
+      label.setAttribute('font-weight', 'bold');
+      label.setAttribute('fill', '#ffffff');
+      label.setAttribute('text-anchor', 'middle');
+      label.textContent = pin.id.replace('_TOP', '').replace('1', '').replace('2', '');
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = `${pin.label} (${pin.id})`;
+
+      g.appendChild(hole);
+      g.appendChild(label);
+      g.appendChild(title);
+
+      g.addEventListener('click', () => {
+        alert(`เลือกพิน: ${pin.label} (พิกัดภายในบอร์ด x=${pin.x}, y=${pin.y})`);
+      });
+
+      pinsGroup.appendChild(g);
+    }
+
+    TOP_PINS.forEach(p => drawSocket(p, true));
+    BOTTOM_PINS.forEach(p => drawSocket(p, false));
+  </script>
+</body>
+</html>
