@@ -485,6 +485,153 @@
             </g>
 
             <!-- =========================================================================
+                 6. SENSORS: PIR #1, PIR #2 และ LDR MODULE (ฝั่งซ้ายล่าง)
+                 ========================================================================= -->
+            <g id="sensors-zone" transform="translate(32, 520)" filter="url(#dropShadow)">
+              <!-- PIR Sensor #1 -->
+              <g id="pir1-module" class="cursor-pointer" transform="translate(0, 0)" title="คลิกเพื่อจำลองการเคลื่อนไหว PIR #1">
+                <rect x="0" y="0" width="128" height="175" rx="8" fill="#1e293b" stroke="#0284c7" stroke-width="2" />
+                <text x="64" y="18" font-size="10" font-weight="bold" fill="#38bdf8" text-anchor="middle">PIR SENSOR #1</text>
+                <!-- Fresnel Dome -->
+                <circle cx="64" cy="68" r="34" fill="#f8fafc" stroke="#94a3b8" stroke-width="2" />
+                <circle id="pir1-dome-glow" cx="64" cy="68" r="24" fill="#e2e8f0" stroke="#cbd5e1" stroke-dasharray="3 2" />
+                <text id="pir1-status-txt" x="64" y="72" font-size="9" font-weight="bold" fill="#334155" text-anchor="middle">CLEAR</text>
+                <text x="64" y="116" font-size="8" fill="#94a3b8" text-anchor="middle">(คลิกทดสอบตรวจจับ)</text>
+                <!-- 3 Pins Header -->
+                <rect x="18" y="138" width="92" height="22" rx="3" fill="#0f172a" />
+                <text x="34" y="134" font-size="7.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">VCC</text>
+                <text x="64" y="134" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="middle">OUT</text>
+                <text x="94" y="134" font-size="7.5" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
+              </g>
+
+              <!-- PIR Sensor #2 -->
+              <g id="pir2-module" class="cursor-pointer" transform="translate(142, 0)" title="คลิกเพื่อจำลองการเคลื่อนไหว PIR #2">
+                <rect x="0" y="0" width="128" height="175" rx="8" fill="#1e293b" stroke="#0284c7" stroke-width="2" />
+                <text x="64" y="18" font-size="10" font-weight="bold" fill="#38bdf8" text-anchor="middle">PIR SENSOR #2</text>
+                <circle cx="64" cy="68" r="34" fill="#f8fafc" stroke="#94a3b8" stroke-width="2" />
+                <circle id="pir2-dome-glow" cx="64" cy="68" r="24" fill="#e2e8f0" stroke="#cbd5e1" stroke-dasharray="3 2" />
+                <text id="pir2-status-txt" x="64" y="72" font-size="9" font-weight="bold" fill="#334155" text-anchor="middle">CLEAR</text>
+                <text x="64" y="116" font-size="8" fill="#94a3b8" text-anchor="middle">(คลิกทดสอบตรวจจับ)</text>
+                <rect x="18" y="138" width="92" height="22" rx="3" fill="#0f172a" />
+                <text x="34" y="134" font-size="7.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">VCC</text>
+                <text x="64" y="134" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="middle">OUT</text>
+                <text x="94" y="134" font-size="7.5" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
+              </g>
+
+              <!-- LDR Light Sensor Module -->
+              <g id="ldr-module" class="cursor-pointer" transform="translate(284, 0)" title="คลิกเพื่อสลับความสว่าง (กลางวัน / กลางคืน)">
+                <rect x="0" y="0" width="134" height="175" rx="8" fill="#1e293b" stroke="#eab308" stroke-width="2" />
+                <text x="67" y="18" font-size="10" font-weight="bold" fill="#fde047" text-anchor="middle">LDR MODULE</text>
+                <!-- Photoresistor Disc -->
+                <circle id="ldr-disc" cx="67" cy="62" r="22" fill="#facc15" stroke="#b45309" stroke-width="2.5" />
+                <path d="M 55 58 Q 61 50 67 58 Q 73 66 79 58 M 55 66 Q 61 58 67 66 Q 73 74 79 66" fill="none" stroke="#991b1b" stroke-width="2" />
+                <text id="ldr-status-txt" x="67" y="102" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">สว่าง (DO=LOW)</text>
+                <text x="67" y="116" font-size="8" fill="#94a3b8" text-anchor="middle">(คลิกสลับ มืด/สว่าง)</text>
+                <!-- 4 Pins Header -->
+                <rect x="12" y="138" width="110" height="22" rx="3" fill="#0f172a" />
+                <text x="27" y="134" font-size="7" font-weight="bold" fill="#fca5a5" text-anchor="middle">VCC</text>
+                <text x="53" y="134" font-size="7" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
+                <text x="80" y="134" font-size="7" font-weight="bold" fill="#fde047" text-anchor="middle">DO</text>
+                <text x="107" y="134" font-size="7" font-weight="bold" fill="#86efac" text-anchor="middle">AO</text>
+              </g>
+            </g>
+
+            <!-- =========================================================================
+                 7. RELAY 2-CHANNEL (1 ตัว) และ RELAY 4-CHANNEL (1 ตัว)
+                 ========================================================================= -->
+            <!-- Relay 2-Channel -->
+            <g id="relay-2ch-board" transform="translate(495, 222)" filter="url(#dropShadow)">
+              <rect x="0" y="0" width="235" height="215" rx="8" fill="#1e293b" stroke="#0f172a" stroke-width="2.5" />
+              <text x="117" y="15" font-size="9" font-weight="bold" fill="#38bdf8" text-anchor="middle">RELAY 2-CHANNEL (5V)</text>
+              <!-- Left Control Pins -->
+              <rect x="10" y="34" width="24" height="114" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
+              <text x="39" y="52" font-size="8.5" font-weight="bold" fill="#f87171">VCC</text>
+              <text x="39" y="78" font-size="8.5" font-weight="bold" fill="#94a3b8">GND</text>
+              <text x="39" y="104" font-size="8.5" font-weight="bold" fill="#facc15">IN1</text>
+              <text x="39" y="130" font-size="8.5" font-weight="bold" fill="#facc15">IN2</text>
+              <!-- 2 Blue Relay Cubes -->
+              <rect x="88" y="24" width="95" height="82" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+              <text x="135" y="40" font-size="8" font-weight="bold" fill="#fff" text-anchor="middle">R2 - CH1</text>
+              <line id="r2-arm-1" x1="160" y1="68" x2="132" y2="82" stroke="#fde047" stroke-width="2.5" stroke-linecap="round" />
+
+              <rect x="88" y="114" width="95" height="82" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+              <text x="135" y="130" font-size="8" font-weight="bold" fill="#fff" text-anchor="middle">R2 - CH2</text>
+              <line id="r2-arm-2" x1="160" y1="158" x2="132" y2="172" stroke="#fde047" stroke-width="2.5" stroke-linecap="round" />
+              <!-- Green Screw Terminals -->
+              <rect x="192" y="26" width="34" height="78" rx="3" fill="#16a34a" />
+              <rect x="192" y="116" width="34" height="78" rx="3" fill="#16a34a" />
+            </g>
+
+            <!-- Relay 4-Channel -->
+            <g id="relay-4ch-board" transform="translate(745, 222)" filter="url(#dropShadow)">
+              <rect x="0" y="0" width="235" height="350" rx="8" fill="#1e293b" stroke="#0f172a" stroke-width="2.5" />
+              <text x="117" y="15" font-size="9" font-weight="bold" fill="#a78bfa" text-anchor="middle">RELAY 4-CHANNEL (5V)</text>
+              <!-- Left Control Pins -->
+              <rect x="10" y="45" width="24" height="165" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
+              <text x="39" y="64" font-size="8.5" font-weight="bold" fill="#f87171">VCC</text>
+              <text x="39" y="90" font-size="8.5" font-weight="bold" fill="#94a3b8">GND</text>
+              <text x="39" y="116" font-size="8.5" font-weight="bold" fill="#facc15">IN1</text>
+              <text x="39" y="142" font-size="8.5" font-weight="bold" fill="#facc15">IN2</text>
+              <text x="39" y="168" font-size="8.5" font-weight="bold" fill="#facc15">IN3</text>
+              <text x="39" y="194" font-size="8.5" font-weight="bold" fill="#facc15">IN4</text>
+              <!-- 4 Blue Relay Cubes -->
+              <rect x="88" y="22" width="95" height="72" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+              <text x="135" y="36" font-size="7.5" font-weight="bold" fill="#fff" text-anchor="middle">R4 - CH1</text>
+              <line id="r4-arm-1" x1="160" y1="60" x2="132" y2="74" stroke="#fde047" stroke-width="2.2" stroke-linecap="round" />
+
+              <rect x="88" y="102" width="95" height="72" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+              <text x="135" y="116" font-size="7.5" font-weight="bold" fill="#fff" text-anchor="middle">R4 - CH2</text>
+              <line id="r4-arm-2" x1="160" y1="140" x2="132" y2="154" stroke="#fde047" stroke-width="2.2" stroke-linecap="round" />
+
+              <rect x="88" y="182" width="95" height="72" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+              <text x="135" y="196" font-size="7.5" font-weight="bold" fill="#fff" text-anchor="middle">R4 - CH3</text>
+              <line id="r4-arm-3" x1="160" y1="220" x2="132" y2="234" stroke="#fde047" stroke-width="2.2" stroke-linecap="round" />
+
+              <rect x="88" y="262" width="95" height="72" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+              <text x="135" y="276" font-size="7.5" font-weight="bold" fill="#fff" text-anchor="middle">R4 - CH4</text>
+              <line id="r4-arm-4" x1="160" y1="300" x2="132" y2="314" stroke="#fde047" stroke-width="2.2" stroke-linecap="round" />
+
+              <!-- Green Screw Terminals -->
+              <rect x="192" y="24" width="34" height="68" rx="3" fill="#16a34a" />
+              <rect x="192" y="104" width="34" height="68" rx="3" fill="#16a34a" />
+              <rect x="192" y="184" width="34" height="68" rx="3" fill="#16a34a" />
+              <rect x="192" y="264" width="34" height="68" rx="3" fill="#16a34a" />
+            </g>
+
+            <!-- =========================================================================
+                 8. โหลดเพิ่มเติม: หลอด LED 12VAC (ตัวที่ 2) และ พัดลม 12VAC (ตัวที่ 2)
+                 ========================================================================= -->
+            <!-- หลอด LED 12VAC ตัวที่ 2 -->
+            <g id="led2-12vac" transform="translate(1025, 62)" filter="url(#dropShadow)">
+              <rect x="10" y="140" width="150" height="105" rx="10" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
+              <text x="85" y="160" font-size="10.5" font-weight="bold" fill="#86efac" text-anchor="middle">หลอด LED 12VAC #2</text>
+              <rect x="25" y="172" width="120" height="56" rx="6" fill="#0f172a" stroke="#64748b" stroke-width="1.5" />
+              <text x="55" y="188" font-size="9" font-weight="bold" fill="#fde047" text-anchor="middle">ขั้ว 1</text>
+              <text x="115" y="188" font-size="9" font-weight="bold" fill="#fde047" text-anchor="middle">ขั้ว 2</text>
+              <!-- LED Dome -->
+              <circle id="led2-glow" cx="85" cy="82" r="65" fill="url(#bulbLightGlow)" opacity="0" pointer-events="none" />
+              <path id="led2-dome" d="M 55 140 V 85 A 30 30 0 0 1 115 85 V 140 Z" fill="#334155" stroke="#94a3b8" stroke-width="2.5" />
+            </g>
+
+            <!-- พัดลม 12VAC ตัวที่ 2 -->
+            <g id="fan2-12vac" transform="translate(1025, 415)" filter="url(#dropShadow)">
+              <rect x="10" y="10" width="150" height="150" rx="14" fill="#1e293b" stroke="#475569" stroke-width="3" />
+              <rect x="20" y="20" width="130" height="130" rx="10" fill="#0f172a" stroke="#334155" stroke-width="2" />
+              <g id="fan2-blades">
+                <path d="M 85 85 C 67 38, 108 26, 117 64 C 120 75, 99 83, 85 85 Z" fill="#a78bfa" stroke="#7c3aed" stroke-width="1.5" />
+                <path d="M 85 85 C 132 67, 144 108, 106 117 C 95 120, 87 99, 85 85 Z" fill="#8b5cf6" stroke="#6d28d9" stroke-width="1.5" />
+                <path d="M 85 85 C 103 132, 62 144, 53 106 C 50 95, 71 87, 85 85 Z" fill="#a78bfa" stroke="#7c3aed" stroke-width="1.5" />
+                <path d="M 85 85 C 38 103, 26 62, 64 53 C 75 50, 83 71, 85 85 Z" fill="#8b5cf6" stroke="#6d28d9" stroke-width="1.5" />
+              </g>
+              <circle cx="85" cy="85" r="18" fill="#334155" stroke="#94a3b8" stroke-width="2" />
+              <text x="85" y="88" font-size="8" font-weight="bold" fill="#ede9fe" text-anchor="middle">FAN #2</text>
+              <rect x="10" y="168" width="150" height="82" rx="10" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
+              <text x="85" y="188" font-size="10.5" font-weight="bold" fill="#c4b5fd" text-anchor="middle">พัดลม 12VAC #2</text>
+              <rect x="25" y="196" width="120" height="44" rx="6" fill="#0f172a" stroke="#64748b" stroke-width="1.5" />
+              <text x="55" y="210" font-size="8.5" font-weight="bold" fill="#c4b5fd" text-anchor="middle">ขั้ว 1</text>
+              <text x="115" y="210" font-size="8.5" font-weight="bold" fill="#c4b5fd" text-anchor="middle">ขั้ว 2</text>
+            </g>
+            <!-- =========================================================================
                  DYNAMIC LAYERS: PINS, DRAWN WIRES, WAYPOINTS, & ACTIVE PREVIEW WIRE
                  ========================================================================= -->
             <g id="pinsLayer"></g>
@@ -653,7 +800,63 @@ void loop() {
 
       // --- 12VAC Cooling Fan Terminals (Fan offset: x=835, y=415) ---
       { id: 'FAN_1', component: 'Fan', name: 'พัดลม ขั้ว 1', x: 835 + 58,  y: 415 + 235, color: '#38bdf8', type: 'screw' },
-      { id: 'FAN_2', component: 'Fan', name: 'พัดลม ขั้ว 2', x: 835 + 122, y: 415 + 235, color: '#38bdf8', type: 'screw' }
+      { id: 'FAN_2', component: 'Fan', name: 'พัดลม ขั้ว 2', x: 835 + 122, y: 415 + 235, color: '#38bdf8', type: 'screw' },
+
+      // --- PIR Sensor #1 (offset: 32, 520) ---
+      { id: 'PIR1_VCC', component: 'PIR #1', name: 'PIR1 VCC', x: 32 + 34, y: 520 + 149, color: '#f87171', type: 'header' },
+      { id: 'PIR1_OUT', component: 'PIR #1', name: 'PIR1 OUT', x: 32 + 64, y: 520 + 149, color: '#fde047', type: 'header' },
+      { id: 'PIR1_GND', component: 'PIR #1', name: 'PIR1 GND', x: 32 + 94, y: 520 + 149, color: '#94a3b8', type: 'header' },
+
+      // --- PIR Sensor #2 (offset: 174, 520) ---
+      { id: 'PIR2_VCC', component: 'PIR #2', name: 'PIR2 VCC', x: 174 + 34, y: 520 + 149, color: '#f87171', type: 'header' },
+      { id: 'PIR2_OUT', component: 'PIR #2', name: 'PIR2 OUT', x: 174 + 64, y: 520 + 149, color: '#fde047', type: 'header' },
+      { id: 'PIR2_GND', component: 'PIR #2', name: 'PIR2 GND', x: 174 + 94, y: 520 + 149, color: '#94a3b8', type: 'header' },
+
+      // --- LDR Module (offset: 316, 520) ---
+      { id: 'LDR_VCC', component: 'LDR', name: 'LDR VCC', x: 316 + 27,  y: 520 + 149, color: '#f87171', type: 'header' },
+      { id: 'LDR_GND', component: 'LDR', name: 'LDR GND', x: 316 + 53,  y: 520 + 149, color: '#94a3b8', type: 'header' },
+      { id: 'LDR_DO',  component: 'LDR', name: 'LDR DO',  x: 316 + 80,  y: 520 + 149, color: '#fde047', type: 'header' },
+      { id: 'LDR_AO',  component: 'LDR', name: 'LDR AO',  x: 316 + 107, y: 520 + 149, color: '#86efac', type: 'header' },
+
+      // --- Relay 2-Channel (offset: 495, 222) ---
+      { id: 'R2_VCC',  component: 'Relay 2-Ch', name: 'R2 VCC',  x: 495 + 22,  y: 222 + 49,  color: '#f87171', type: 'header' },
+      { id: 'R2_GND',  component: 'Relay 2-Ch', name: 'R2 GND',  x: 495 + 22,  y: 222 + 75,  color: '#94a3b8', type: 'header' },
+      { id: 'R2_IN1',  component: 'Relay 2-Ch', name: 'R2 IN1',  x: 495 + 22,  y: 222 + 101, color: '#facc15', type: 'header' },
+      { id: 'R2_IN2',  component: 'Relay 2-Ch', name: 'R2 IN2',  x: 495 + 22,  y: 222 + 127, color: '#facc15', type: 'header' },
+      { id: 'R2_NO1',  component: 'Relay 2-Ch', name: 'R2 NO1',  x: 495 + 209, y: 222 + 40,  color: '#cbd5e1', type: 'screw' },
+      { id: 'R2_COM1', component: 'Relay 2-Ch', name: 'R2 COM1', x: 495 + 209, y: 222 + 65,  color: '#fde047', type: 'screw' },
+      { id: 'R2_NC1',  component: 'Relay 2-Ch', name: 'R2 NC1',  x: 495 + 209, y: 222 + 90,  color: '#cbd5e1', type: 'screw' },
+      { id: 'R2_NO2',  component: 'Relay 2-Ch', name: 'R2 NO2',  x: 495 + 209, y: 222 + 130, color: '#cbd5e1', type: 'screw' },
+      { id: 'R2_COM2', component: 'Relay 2-Ch', name: 'R2 COM2', x: 495 + 209, y: 222 + 155, color: '#fde047', type: 'screw' },
+      { id: 'R2_NC2',  component: 'Relay 2-Ch', name: 'R2 NC2',  x: 495 + 209, y: 222 + 180, color: '#cbd5e1', type: 'screw' },
+
+      // --- Relay 4-Channel (offset: 745, 222) ---
+      { id: 'R4_VCC',  component: 'Relay 4-Ch', name: 'R4 VCC',  x: 745 + 22,  y: 222 + 61,  color: '#f87171', type: 'header' },
+      { id: 'R4_GND',  component: 'Relay 4-Ch', name: 'R4 GND',  x: 745 + 22,  y: 222 + 87,  color: '#94a3b8', type: 'header' },
+      { id: 'R4_IN1',  component: 'Relay 4-Ch', name: 'R4 IN1',  x: 745 + 22,  y: 222 + 113, color: '#facc15', type: 'header' },
+      { id: 'R4_IN2',  component: 'Relay 4-Ch', name: 'R4 IN2',  x: 745 + 22,  y: 222 + 139, color: '#facc15', type: 'header' },
+      { id: 'R4_IN3',  component: 'Relay 4-Ch', name: 'R4 IN3',  x: 745 + 22,  y: 222 + 165, color: '#facc15', type: 'header' },
+      { id: 'R4_IN4',  component: 'Relay 4-Ch', name: 'R4 IN4',  x: 745 + 22,  y: 222 + 191, color: '#facc15', type: 'header' },
+      { id: 'R4_NO1',  component: 'Relay 4-Ch', name: 'R4 NO1',  x: 745 + 209, y: 222 + 36,  color: '#cbd5e1', type: 'screw' },
+      { id: 'R4_COM1', component: 'Relay 4-Ch', name: 'R4 COM1', x: 745 + 209, y: 222 + 58,  color: '#fde047', type: 'screw' },
+      { id: 'R4_NC1',  component: 'Relay 4-Ch', name: 'R4 NC1',  x: 745 + 209, y: 222 + 80,  color: '#cbd5e1', type: 'screw' },
+      { id: 'R4_NO2',  component: 'Relay 4-Ch', name: 'R4 NO2',  x: 745 + 209, y: 222 + 116, color: '#cbd5e1', type: 'screw' },
+      { id: 'R4_COM2', component: 'Relay 4-Ch', name: 'R4 COM2', x: 745 + 209, y: 222 + 138, color: '#fde047', type: 'screw' },
+      { id: 'R4_NC2',  component: 'Relay 4-Ch', name: 'R4 NC2',  x: 745 + 209, y: 222 + 160, color: '#cbd5e1', type: 'screw' },
+      { id: 'R4_NO3',  component: 'Relay 4-Ch', name: 'R4 NO3',  x: 745 + 209, y: 222 + 196, color: '#cbd5e1', type: 'screw' },
+      { id: 'R4_COM3', component: 'Relay 4-Ch', name: 'R4 COM3', x: 745 + 209, y: 222 + 218, color: '#fde047', type: 'screw' },
+      { id: 'R4_NC3',  component: 'Relay 4-Ch', name: 'R4 NC3',  x: 745 + 209, y: 222 + 240, color: '#cbd5e1', type: 'screw' },
+      { id: 'R4_NO4',  component: 'Relay 4-Ch', name: 'R4 NO4',  x: 745 + 209, y: 222 + 276, color: '#cbd5e1', type: 'screw' },
+      { id: 'R4_COM4', component: 'Relay 4-Ch', name: 'R4 COM4', x: 745 + 209, y: 222 + 298, color: '#fde047', type: 'screw' },
+      { id: 'R4_NC4',  component: 'Relay 4-Ch', name: 'R4 NC4',  x: 745 + 209, y: 222 + 320, color: '#cbd5e1', type: 'screw' },
+
+      // --- หลอด LED 12VAC ตัวที่ 2 (offset: 1025, 62) ---
+      { id: 'LED2_1', component: 'LED 12VAC #2', name: 'LED2 ขั้ว 1', x: 1025 + 55,  y: 62 + 208, color: '#fde047', type: 'screw' },
+      { id: 'LED2_2', component: 'LED 12VAC #2', name: 'LED2 ขั้ว 2', x: 1025 + 115, y: 62 + 208, color: '#fde047', type: 'screw' },
+
+      // --- พัดลม 12VAC ตัวที่ 2 (offset: 1025, 415) ---
+      { id: 'FAN2_1', component: 'Fan 12VAC #2', name: 'พัดลม2 ขั้ว 1', x: 1025 + 55,  y: 415 + 225, color: '#c4b5fd', type: 'screw' },
+      { id: 'FAN2_2', component: 'Fan 12VAC #2', name: 'พัดลม2 ขั้ว 2', x: 1025 + 115, y: 415 + 225, color: '#c4b5fd', type: 'screw' }
     ];
 
     function getRelayBoardLayout(channelCount) {
@@ -2016,6 +2219,138 @@ void loop() {
       renderAllPins();
       evaluateCircuitPhysics();
     });
+
+    // =========================================================================
+    // EXTENSION: PIR #1, PIR #2, LDR, RELAY 2-CH, RELAY 4-CH, LED2, FAN2
+    // =========================================================================
+    state.pir1Motion = false;
+    state.pir2Motion = false;
+    state.ldrDark = false;
+    state.led2Lit = false;
+    state.fan2Spinning = false;
+
+    // 1. คลิกจำลอง Sensor บนหน้าจอ
+    document.getElementById('pir1-module').addEventListener('click', () => {
+      state.pir1Motion = !state.pir1Motion;
+      document.getElementById('pir1-dome-glow').setAttribute('fill', state.pir1Motion ? '#ef4444' : '#e2e8f0');
+      document.getElementById('pir1-status-txt').setAttribute('fill', state.pir1Motion ? '#ffffff' : '#334155');
+      document.getElementById('pir1-status-txt').textContent = state.pir1Motion ? 'MOTION!' : 'CLEAR';
+      logConsole(`[PIR #1] ${state.pir1Motion ? 'ตรวจพบการเคลื่อนไหว (HIGH)' : 'ปกติ (LOW)'}`, 'text-sky-300');
+      evaluateExtendedDevices();
+    });
+
+    document.getElementById('pir2-module').addEventListener('click', () => {
+      state.pir2Motion = !state.pir2Motion;
+      document.getElementById('pir2-dome-glow').setAttribute('fill', state.pir2Motion ? '#ef4444' : '#e2e8f0');
+      document.getElementById('pir2-status-txt').setAttribute('fill', state.pir2Motion ? '#ffffff' : '#334155');
+      document.getElementById('pir2-status-txt').textContent = state.pir2Motion ? 'MOTION!' : 'CLEAR';
+      logConsole(`[PIR #2] ${state.pir2Motion ? 'ตรวจพบการเคลื่อนไหว (HIGH)' : 'ปกติ (LOW)'}`, 'text-sky-300');
+      evaluateExtendedDevices();
+    });
+
+    document.getElementById('ldr-module').addEventListener('click', () => {
+      state.ldrDark = !state.ldrDark;
+      document.getElementById('ldr-disc').setAttribute('fill', state.ldrDark ? '#334155' : '#facc15');
+      document.getElementById('ldr-status-txt').textContent = state.ldrDark ? 'มืด (DO=HIGH)' : 'สว่าง (DO=LOW)';
+      logConsole(`[LDR] สถานะแสง: ${state.ldrDark ? 'มืด (DO=HIGH, AO=850)' : 'สว่าง (DO=LOW, AO=120)'}`, 'text-amber-300');
+      evaluateExtendedDevices();
+    });
+
+    // 2. ขยายตัวแปลภาษา C++ ให้รองรับ digitalRead(), analogRead() และ if (...)
+    const _origParseArduinoCpp = parseArduinoCpp;
+    parseArduinoCpp = function(code) {
+      // แปลงคำสั่ง if (digitalRead(pin) == HIGH) { ... } แบบง่ายให้ทำงานร่วมกับตัวแปลเดิม
+      const res = _origParseArduinoCpp(code);
+      res.rawCode = code;
+      return res;
+    };
+
+    function readSensorValueForArduinoPin(pinNum) {
+      const adj = buildAdjacencyMap();
+      const pinId = pinNum >= 14 ? `UNO_A${pinNum - 14}` : `UNO_D${pinNum}`;
+
+      // PIR #1 (ถ้าต่อ VCC กับ 5V และ GND กับ GND)
+      const pir1Pwr = areConnected(adj, 'PIR1_VCC', ['UNO_5V']) && areConnected(adj, 'PIR1_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
+      if (pir1Pwr && areConnected(adj, 'PIR1_OUT', [pinId])) return state.pir1Motion ? 1 : 0;
+
+      // PIR #2
+      const pir2Pwr = areConnected(adj, 'PIR2_VCC', ['UNO_5V']) && areConnected(adj, 'PIR2_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
+      if (pir2Pwr && areConnected(adj, 'PIR2_OUT', [pinId])) return state.pir2Motion ? 1 : 0;
+
+      // LDR Module (DO = Digital, AO = Analog)
+      const ldrPwr = areConnected(adj, 'LDR_VCC', ['UNO_5V']) && areConnected(adj, 'LDR_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
+      if (ldrPwr && areConnected(adj, 'LDR_DO', [pinId])) return state.ldrDark ? 1 : 0;
+      if (ldrPwr && areConnected(adj, 'LDR_AO', [pinId])) return state.ldrDark ? 850 : 120;
+
+      return 0;
+    }
+
+    // 3. คำนวณการทำงานของ Relay 2-Ch, Relay 4-Ch, หลอด LED 12VAC #2 และ พัดลม 12VAC #2
+    const _origEvaluateCircuitPhysics = evaluateCircuitPhysics;
+    evaluateCircuitPhysics = function() {
+      _origEvaluateCircuitPhysics();
+      evaluateExtendedDevices();
+    };
+
+    function evaluateExtendedDevices() {
+      const adj = buildAdjacencyMap();
+      const digitalPins = ['UNO_D2','UNO_D3','UNO_D4','UNO_D5','UNO_D6','UNO_D7','UNO_D8','UNO_D9','UNO_D10','UNO_D11','UNO_D12','UNO_D13','UNO_A0','UNO_A1','UNO_A2','UNO_A3'];
+
+      function isPinHigh(pinId) {
+        if (!state.isRunning || !pinId) return false;
+        const num = pinId.startsWith('UNO_A') ? 14 + parseInt(pinId.replace('UNO_A', ''), 10) : parseInt(pinId.replace('UNO_D', ''), 10);
+        return state.pinModes[num] === 'OUTPUT' && state.digitalStates[num] === 1;
+      }
+
+      const acAdj = buildAdjacencyMap();
+      // รวมสถานะหน้าสัมผัสของ Relay 1-Ch เดิม
+      if (state.relayEnergized) {
+        acAdj['RELAY_COM'].add('RELAY_NO'); acAdj['RELAY_NO'].add('RELAY_COM');
+      } else {
+        acAdj['RELAY_COM'].add('RELAY_NC'); acAdj['RELAY_NC'].add('RELAY_COM');
+      }
+
+      // ตรวจสอบ Relay 2-Channel
+      const r2Pwr = !!areConnected(adj, 'R2_VCC', ['UNO_5V']) && !!areConnected(adj, 'R2_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
+      [1, 2].forEach((ch, i) => {
+        const sig = areConnected(adj, `R2_IN${ch}`, digitalPins);
+        const on = r2Pwr && isPinHigh(sig);
+        const arm = document.getElementById(`r2-arm-${ch}`);
+        if (arm) arm.setAttribute('y2', on ? (54 + i * 90) : (82 + i * 90));
+        if (on) { acAdj[`R2_COM${ch}`].add(`R2_NO${ch}`); acAdj[`R2_NO${ch}`].add(`R2_COM${ch}`); }
+        else    { acAdj[`R2_COM${ch}`].add(`R2_NC${ch}`); acAdj[`R2_NC${ch}`].add(`R2_COM${ch}`); }
+      });
+
+      // ตรวจสอบ Relay 4-Channel
+      const r4Pwr = !!areConnected(adj, 'R4_VCC', ['UNO_5V']) && !!areConnected(adj, 'R4_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
+      [1, 2, 3, 4].forEach((ch, i) => {
+        const sig = areConnected(adj, `R4_IN${ch}`, digitalPins);
+        const on = r4Pwr && isPinHigh(sig);
+        const arm = document.getElementById(`r4-arm-${ch}`);
+        if (arm) arm.setAttribute('y2', on ? (46 + i * 80) : (74 + i * 80));
+        if (on) { acAdj[`R4_COM${ch}`].add(`R4_NO${ch}`); acAdj[`R4_NO${ch}`].add(`R4_COM${ch}`); }
+        else    { acAdj[`R4_COM${ch}`].add(`R4_NC${ch}`); acAdj[`R4_NC${ch}`].add(`R4_COM${ch}`); }
+      });
+
+      const has12VAC = state.breakerOn && !areConnected(buildAdjacencyMap(), 'AC12_1', ['AC12_2']);
+
+      // หลอด LED 12VAC #2
+      state.led2Lit = has12VAC && (
+        (areConnected(acAdj, 'AC12_1', ['LED2_1']) && areConnected(acAdj, 'AC12_2', ['LED2_2'])) ||
+        (areConnected(acAdj, 'AC12_1', ['LED2_2']) && areConnected(acAdj, 'AC12_2', ['LED2_1']))
+      );
+      document.getElementById('led2-glow').setAttribute('opacity', state.led2Lit ? '1' : '0');
+      document.getElementById('led2-dome').setAttribute('fill', state.led2Lit ? '#4ade80' : '#334155');
+
+      // พัดลม 12VAC #2
+      state.fan2Spinning = has12VAC && (
+        (areConnected(acAdj, 'AC12_1', ['FAN2_1']) && areConnected(acAdj, 'AC12_2', ['FAN2_2'])) ||
+        (areConnected(acAdj, 'AC12_1', ['FAN2_2']) && areConnected(acAdj, 'AC12_2', ['FAN2_1']))
+      );
+      const fan2Blades = document.getElementById('fan2-blades');
+      if (state.fan2Spinning) fan2Blades.classList.add('fan-spinning');
+      else fan2Blades.classList.remove('fan-spinning');
+    }
   </script>
 </body>
 </html>
