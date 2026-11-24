@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hardware Simulator: Arduino Uno R3 + OLED + Relay Modules + 12VAC & 12VDC</title>
+  <title>Arduino Uno R3 Relay & 12VAC Lamp Circuit Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -17,6 +17,7 @@
     .code-font {
       font-family: 'JetBrains Mono', monospace;
     }
+    /* Custom scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -32,6 +33,7 @@
       background: #64748b;
     }
 
+    /* SVG Pin & Wire Interactions */
     .pin-node {
       cursor: crosshair;
       transition: transform 0.12s ease;
@@ -39,7 +41,7 @@
     .pin-node:hover .pin-hit {
       stroke: #facc15;
       stroke-width: 3;
-      fill-opacity: 0.45;
+      fill-opacity: 0.4;
     }
     .pin-selected .pin-hit {
       stroke: #38bdf8;
@@ -48,9 +50,9 @@
       animation: pulseRing 1.2s infinite;
     }
     @keyframes pulseRing {
-      0% { r: 7; opacity: 1; }
-      70% { r: 13; opacity: 0.3; }
-      100% { r: 7; opacity: 1; }
+      0% { r: 8; opacity: 1; }
+      70% { r: 14; opacity: 0.3; }
+      100% { r: 8; opacity: 1; }
     }
 
     .wire-path {
@@ -58,48 +60,31 @@
       transition: stroke-width 0.15s ease, filter 0.15s ease;
     }
     .wire-path:hover {
-      stroke-width: 6 !important;
+      stroke-width: 6.5 !important;
       filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.9));
     }
 
-    .waypoint-handle {
-      cursor: move;
-      transition: r 0.12s ease, fill 0.12s ease;
-    }
-    .waypoint-handle:hover {
-      r: 6;
-      fill: #facc15;
-    }
-
-    @keyframes powerFlow {
+    /* AC Current Flow Animation when energized */
+    @keyframes acFlow {
       to {
         stroke-dashoffset: -24;
       }
     }
     .wire-energized-ac {
       stroke-dasharray: 6 6;
-      animation: powerFlow 0.5s linear infinite;
-    }
-    .wire-energized-dc {
-      stroke-dasharray: 10 4;
-      animation: powerFlow 0.35s linear infinite;
+      animation: acFlow 0.5s linear infinite;
     }
 
-    @keyframes fanSpin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .fan-spinning {
-      transform-box: fill-box;
-      transform-origin: center;
-      animation: fanSpin 0.4s linear infinite;
+    /* Bulb Glow Transition */
+    #bulb-glow-outer, #bulb-glow-inner, #bulb-filament {
+      transition: opacity 0.15s ease, filter 0.15s ease, stroke 0.15s ease;
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
   <!-- Top Navigation / Toolbar -->
-  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-lg z-10">
+  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-lg z-10">
     <div class="flex items-center gap-3">
       <div class="w-9 h-9 rounded-lg bg-teal-600 flex items-center justify-center shadow-inner border border-teal-400/40">
         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
@@ -107,31 +92,30 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-sm sm:text-base font-bold text-white leading-tight">
-          Arduino Uno R3 + OLED + Relay 1Ch / 2Ch / 4Ch / Shield + 12VAC &amp; 12VDC
-        </h1>
+        <h1 class="text-base sm:text-lg font-bold text-white leading-tight">Arduino Uno R3 + Relay 5V + หลอดไฟ 12VAC Simulator</h1>
+        <p class="text-xs text-slate-400">ลากสายไฟเชื่อมวงจรจริง (220VAC → 12VAC Transformer → Relay → Bulb) และเขียนโค้ด C++ สั่งรัน</p>
       </div>
     </div>
 
     <!-- Toolbar Actions -->
     <div class="flex flex-wrap items-center gap-2">
+      <!-- Wire Color Selector -->
       <div class="flex items-center bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-700 gap-1.5" title="เลือกสีสายไฟ">
-        <span class="text-xs text-slate-300 mr-0.5 font-medium">สีสาย:</span>
-        <button data-color="#ef4444" class="color-btn w-4 h-4 rounded-full bg-red-500 ring-2 ring-white scale-110 transition" title="สีแดง"></button>
-        <button data-color="#1e293b" class="color-btn w-4 h-4 rounded-full bg-slate-800 border border-slate-400 transition" title="สีดำ"></button>
-        <button data-color="#eab308" class="color-btn w-4 h-4 rounded-full bg-yellow-500 transition" title="สีเหลือง"></button>
-        <button data-color="#3b82f6" class="color-btn w-4 h-4 rounded-full bg-blue-500 transition" title="สีน้ำเงิน"></button>
-        <button data-color="#92400e" class="color-btn w-4 h-4 rounded-full bg-amber-800 transition" title="สีน้ำตาล"></button>
-        <button data-color="#22c55e" class="color-btn w-4 h-4 rounded-full bg-green-500 transition" title="สีเขียว"></button>
-        <button data-color="#a855f7" class="color-btn w-4 h-4 rounded-full bg-purple-500 transition" title="สีม่วง"></button>
+        <span class="text-xs text-slate-300 mr-1 font-medium">สีสายไฟ:</span>
+        <button data-color="#ef4444" class="color-btn w-5 h-5 rounded-full bg-red-500 ring-2 ring-white scale-110 transition" title="สีแดง (VCC / Line)"></button>
+        <button data-color="#1e293b" class="color-btn w-5 h-5 rounded-full bg-slate-800 border border-slate-400 transition" title="สีดำ (GND / Neutral)"></button>
+        <button data-color="#eab308" class="color-btn w-5 h-5 rounded-full bg-yellow-500 transition" title="สีเหลือง (Signal IN)"></button>
+        <button data-color="#3b82f6" class="color-btn w-5 h-5 rounded-full bg-blue-500 transition" title="สีน้ำเงิน (12VAC / Neutral)"></button>
+        <button data-color="#92400e" class="color-btn w-5 h-5 rounded-full bg-amber-800 transition" title="สีน้ำตาล (220VAC Line)"></button>
+        <button data-color="#22c55e" class="color-btn w-5 h-5 rounded-full bg-green-500 transition" title="สีเขียว"></button>
       </div>
 
-      <button id="btnAutoWireAll" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1">
+      <button id="btnAutoWire" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow transition flex items-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-        Auto-Wire All
+        ต่อวงจรอัตโนมัติ
       </button>
 
-      <button id="btnClearWires" class="px-3 py-1.5 bg-slate-700 hover:bg-rose-600 text-slate-200 hover:text-white text-xs font-semibold rounded-lg transition flex items-center gap-1">
+      <button id="btnClearWires" class="px-3 py-1.5 bg-slate-700 hover:bg-rose-600 text-slate-200 hover:text-white text-xs sm:text-sm font-semibold rounded-lg transition flex items-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         ล้างสายไฟ
       </button>
@@ -140,47 +124,48 @@
 
   <!-- Main Workspace Split Layout -->
   <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
-
-    <!-- LEFT/CENTER: Clean Hardware-Only Circuit Workbench -->
-    <section class="lg:col-span-8 bg-[#0b1120] relative flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800">
-
-      <!-- Top Compact Status Badges -->
-      <div class="px-3 py-2 flex flex-wrap items-center justify-between gap-1.5 bg-slate-900/90 border-b border-slate-800 text-[11px]">
-        <div class="flex flex-wrap items-center gap-1.5">
-          <span id="badge-ac" class="px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-            12VAC: OFF
+    
+    <!-- LEFT/CENTER: Interactive Circuit Workbench (SVG) -->
+    <section class="lg:col-span-8 bg-slate-950 relative flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800">
+      
+      <!-- Top Floating Circuit Status Pill Bar -->
+      <div class="p-3 flex flex-wrap items-center justify-between gap-2 bg-slate-900/80 border-b border-slate-800/80 backdrop-blur">
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span id="badge-220v" class="px-2.5 py-1 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            220VAC: OFF
           </span>
-          <span id="badge-dc" class="px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-            12VDC: OFF
+          <span id="badge-12v" class="px-2.5 py-1 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5">
+            12VAC Out: 0V
           </span>
-          <span id="badge-5v-bus" class="px-2.5 py-0.5 rounded-full font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40">
-            5V: 0.000A
+          <span id="badge-relay-pwr" class="px-2.5 py-1 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+            Relay 5V: ไม่ครบวงจร
           </span>
-          <span id="badge-ac-loads" class="px-2.5 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-            AC Load: 0.00A
-          </span>
-          <span id="badge-dc-loads" class="px-2.5 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-            DC Load: 0.00A
+          <span id="badge-relay-state" class="px-2.5 py-1 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+            หน้าสัมผัส: COM → NC
           </span>
         </div>
-        <div class="text-slate-400">
-          สายไฟ: <span id="wireCount" class="text-white font-bold">0</span> เส้น
+
+        <div class="text-xs text-slate-400 hidden sm:block">
+          💡 คลิกที่รูพิน 1 ครั้งแล้วคลิกปลายทางเพื่อลากสาย | คลิกที่เส้นสายไฟเพื่อลบ
         </div>
       </div>
 
-      <!-- SVG Canvas Container (Pure Hardware Workbench - Dark PCB Grid) -->
-      <div class="flex-1 flex items-center justify-center p-2.5 overflow-auto bg-[#070d19]">
-        <div class="w-full max-w-[1540px] rounded-xl overflow-hidden shadow-2xl border border-slate-800 bg-[#0d1526]">
-          <svg id="circuitCanvas" viewBox="0 0 1540 940" class="w-full h-auto block select-none">
+      <!-- SVG Canvas Container -->
+      <div class="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-auto bg-[#0f172a]">
+        <div class="w-full max-w-[1060px] rounded-xl overflow-hidden shadow-2xl border border-slate-700/80 bg-[#f8fafc]">
+          <svg id="circuitCanvas" viewBox="0 0 1060 640" class="w-full h-auto block select-none">
             <defs>
+              <!-- Blueprint / Breadboard Style Grid -->
               <pattern id="minorGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#162238" stroke-width="0.8" />
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="0.8" />
               </pattern>
               <pattern id="majorGrid" width="100" height="100" patternUnits="userSpaceOnUse">
                 <rect width="100" height="100" fill="url(#minorGrid)" />
-                <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#1e2d4a" stroke-width="1.3" />
+                <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#cbd5e1" stroke-width="1.4" />
               </pattern>
 
+              <!-- Metallic & Glass Gradients -->
               <linearGradient id="copperGrad" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stop-color="#f59e0b" />
                 <stop offset="50%" stop-color="#b45309" />
@@ -202,495 +187,328 @@
                 <stop offset="75%" stop-color="#f97316" stop-opacity="0.22" />
                 <stop offset="100%" stop-color="#f97316" stop-opacity="0" />
               </radialGradient>
-              <radialGradient id="ledDcGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#86efac" stop-opacity="0.95" />
-                <stop offset="45%" stop-color="#22c55e" stop-opacity="0.55" />
-                <stop offset="100%" stop-color="#16a34a" stop-opacity="0" />
-              </radialGradient>
               <filter id="dropShadow" x="-10%" y="-10%" width="125%" height="125%">
-                <feDropShadow dx="2" dy="5" stdDeviation="5" flood-color="#020617" flood-opacity="0.55" />
+                <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.28" />
               </filter>
             </defs>
 
-            <!-- Clean Dark PCB Grid Background -->
-            <rect width="1540" height="940" fill="url(#majorGrid)" />
+            <!-- Background Grid -->
+            <rect width="1060" height="640" fill="url(#majorGrid)" />
+
+            <!-- Zone Dividers & Labels (Low Voltage DC vs High Voltage AC) -->
+            <rect x="16" y="16" width="430" height="608" rx="12" fill="#0ea5e9" fill-opacity="0.04" stroke="#0284c7" stroke-opacity="0.25" stroke-dasharray="6 4" />
+            <text x="32" y="40" font-size="12" font-weight="bold" fill="#0369a1">ฝั่งควบคุมแรงดันต่ำ (5V DC CONTROL ZONE)</text>
+
+            <rect x="462" y="16" width="582" height="608" rx="12" fill="#f59e0b" fill-opacity="0.05" stroke="#d97706" stroke-opacity="0.3" stroke-dasharray="6 4" />
+            <text x="478" y="40" font-size="12" font-weight="bold" fill="#b45309">ฝั่งกำลังไฟฟ้ากระแสสลับ (220VAC / 12VAC POWER ZONE)</text>
 
             <!-- =========================================================================
-                 1. OLED 0.96" I2C DISPLAY
+                 1. ARDUINO UNO R3 (ต่อยอดจากโครงสร้างเดิมของ user ให้สมจริงยิ่งขึ้น)
                  ========================================================================= -->
-            <g id="oled-display" transform="translate(36, 36)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="220" height="122" rx="8" fill="#1d4ed8" stroke="#3b82f6" stroke-width="2" />
-              <!-- Mounting Holes -->
-              <circle cx="11" cy="11" r="4" fill="#0d1526" stroke="#93c5fd" stroke-width="1.2" />
-              <circle cx="209" cy="11" r="4" fill="#0d1526" stroke="#93c5fd" stroke-width="1.2" />
-              <circle cx="11" cy="111" r="4" fill="#0d1526" stroke="#93c5fd" stroke-width="1.2" />
-              <circle cx="209" cy="111" r="4" fill="#0d1526" stroke="#93c5fd" stroke-width="1.2" />
-
-              <rect x="20" y="12" width="180" height="74" rx="4" fill="#060911" stroke="#334155" stroke-width="2" />
-              <text id="oled-line-1" x="28" y="31" font-size="10" font-weight="bold" fill="#38bdf8" class="code-font">OLED 0.96" I2C</text>
-              <text id="oled-line-2" x="28" y="49" font-size="9.5" fill="#e2e8f0" class="code-font">AC: OFF | DC: OFF</text>
-              <text id="oled-line-3" x="28" y="67" font-size="9" fill="#94a3b8" class="code-font">READY</text>
-
-              <rect x="35" y="92" width="150" height="22" rx="3" fill="#0f172a" />
-              <text x="55" y="90" font-size="7.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">VCC</text>
-              <text x="90" y="90" font-size="7.5" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
-              <text x="125" y="90" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="middle">SCL</text>
-              <text x="160" y="90" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="middle">SDA</text>
-            </g>
-
-            <!-- =========================================================================
-                 2. ARDUINO UNO R3
-                 ========================================================================= -->
-            <g id="arduino-uno-r3" transform="translate(32, 224)" filter="url(#dropShadow)">
+            <g id="arduino-uno-r3" transform="translate(55, 195)" filter="url(#dropShadow)">
+              <!-- Main Teal PCB with Characteristic Notches -->
               <path
-                d="M 15 0 H 325 L 345 20 V 224 L 325 244 H 15 A 15 15 0 0 1 0 229 V 15 A 15 15 0 0 1 15 0 Z"
+                d="M 15 0
+                   H 335
+                   L 355 20
+                   V 220
+                   L 335 240
+                   H 15
+                   A 15 15 0 0 1 0 225
+                   V 15
+                   A 15 15 0 0 1 15 0 Z"
                 fill="#00878F"
-                stroke="#0ea5e9"
-                stroke-opacity="0.45"
-                stroke-width="2.5"
+                stroke="#005B61"
+                stroke-width="3"
               />
-              <path d="M 60 44 H 310 V 200 H 60 Z" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="1.2" rx="4" />
 
-              <!-- USB & Barrel Jack -->
-              <rect x="-14" y="28" width="56" height="54" rx="4" fill="#cbd5e1" stroke="#475569" stroke-width="2" />
-              <text x="14" y="58" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="middle">USB</text>
+              <!-- White Silkscreen Outline & Decorative Lines -->
+              <path d="M 65 44 H 320 V 196 H 65 Z" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="1.2" rx="4" />
 
-              <rect x="-14" y="136" width="62" height="52" rx="5" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
-              <text x="17" y="165" font-size="8" font-weight="bold" fill="#cbd5e1" text-anchor="middle">7-12V</text>
+              <!-- 4 Mounting Holes -->
+              <circle cx="24" cy="24" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+              <circle cx="24" cy="216" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+              <circle cx="326" cy="40" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+              <circle cx="326" cy="200" r="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
 
-              <!-- ATMEGA328P -->
+              <!-- USB-B Metallic Port -->
+              <rect x="-18" y="28" width="62" height="56" rx="4" fill="#cbd5e1" stroke="#475569" stroke-width="2.5" />
+              <rect x="-12" y="34" width="50" height="44" rx="2" fill="#94a3b8" />
+              <text x="13" y="60" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">USB</text>
+
+              <!-- 16MHz Crystal Oscillator -->
+              <rect x="82" y="72" width="24" height="10" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5" />
+
+              <!-- Voltage Regulator AMS1117 -->
+              <rect x="64" y="148" width="18" height="22" rx="2" fill="#1e293b" />
+              <rect x="82" y="153" width="6" height="12" fill="#cbd5e1" />
+
+              <!-- DC Power Barrel Jack -->
+              <rect x="-16" y="132" width="68" height="54" rx="5" fill="#1e293b" stroke="#0f172a" stroke-width="2.5" />
+              <circle cx="18" cy="159" r="14" fill="#0f172a" stroke="#475569" stroke-width="2" />
+              <circle cx="18" cy="159" r="5" fill="#cbd5e1" />
+
+              <!-- ATmega328P Microcontroller (DIP-28 with pins) -->
               <g id="atmega-chip">
-                <rect x="130" y="106" width="128" height="36" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2" />
-                <text x="194" y="128" font-size="10.5" font-weight="bold" fill="#e2e8f0" text-anchor="middle">ATMEGA328P-PU</text>
+                <!-- IC Pins -->
+                <rect x="138" y="98" width="124" height="44" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-dasharray="4 5" />
+                <rect x="135" y="102" width="130" height="36" rx="3" fill="#1e293b" stroke="#475569" stroke-width="2" />
+                <path d="M 135 113 A 7 7 0 0 1 135 127" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
+                <text x="202" y="124" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle" letter-spacing="0.8">ATMEGA328P-PU</text>
               </g>
 
-              <!-- Reset Button -->
-              <g id="arduinoResetBtn" class="cursor-pointer" title="Reset">
-                <rect x="64" y="110" width="22" height="22" rx="3" fill="#cbd5e1" stroke="#475569" stroke-width="1.5" />
-                <circle cx="75" cy="121" r="7" fill="#dc2626" />
+              <!-- Red RESET Pushbutton -->
+              <g id="arduinoResetBtn" class="cursor-pointer" title="คลิกเพื่อ Reset โปรแกรม">
+                <rect x="68" y="106" width="22" height="22" rx="3" fill="#cbd5e1" stroke="#475569" stroke-width="1.5" />
+                <circle cx="79" cy="117" r="7" fill="#dc2626" />
               </g>
 
-              <circle id="uno-led-on" cx="116" cy="84" r="4.5" fill="#22c55e" stroke="#14532d" stroke-width="1" />
-              <text x="116" y="75" font-size="7.5" font-weight="bold" fill="#ffffff" text-anchor="middle">ON</text>
+              <!-- Status LEDs -->
+              <circle id="uno-led-on" cx="122" cy="82" r="4.5" fill="#22c55e" stroke="#14532d" stroke-width="1" />
+              <text x="122" y="73" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle">ON</text>
 
-              <circle id="uno-led-l" cx="275" cy="68" r="4.5" fill="#713f12" stroke="#422006" stroke-width="1" />
-              <text x="275" y="59" font-size="7.5" font-weight="bold" fill="#ffffff" text-anchor="middle">L</text>
+              <circle id="uno-led-l" cx="285" cy="66" r="4.5" fill="#713f12" stroke="#422006" stroke-width="1" />
+              <text x="285" y="57" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle">L (D13)</text>
 
-              <text x="195" y="84" font-size="15" font-weight="bold" fill="#ffffff" text-anchor="middle">ARDUINO UNO R3</text>
-              <text x="195" y="164" font-size="8.5" font-weight="bold" fill="#a7f3d0" text-anchor="middle">5V LOGIC • 40mA / PIN</text>
+              <!-- Board Silkscreen Branding -->
+              <text x="205" y="82" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">ARDUINO</text>
+              <rect x="252" y="69" width="22" height="14" rx="2" fill="#ffffff" />
+              <text x="263" y="80" font-size="10" font-weight="bold" fill="#00878F" text-anchor="middle">UNO</text>
+              <text x="205" y="164" font-size="10" font-weight="bold" fill="#a7f3d0" text-anchor="middle">DIGITAL (PWM~) &amp; POWER</text>
 
-              <!-- Pin Headers -->
-              <rect x="82" y="14" width="224" height="20" rx="2" fill="#0f172a" />
-              <rect x="120" y="210" width="56" height="20" rx="2" fill="#0f172a" />
-              <rect x="196" y="210" width="98" height="20" rx="2" fill="#0f172a" />
+              <!-- Top Female Header Block (DIGITAL) -->
+              <rect x="86" y="14" width="224" height="20" rx="2" fill="#0f172a" />
+              <!-- Bottom Female Header Blocks (POWER & ANALOG) -->
+              <rect x="126" y="206" width="56" height="20" rx="2" fill="#0f172a" />
+              <rect x="204" y="206" width="98" height="20" rx="2" fill="#0f172a" />
             </g>
 
             <!-- =========================================================================
-                 3. 5V / GND POWER DISTRIBUTION RAIL
+                 2. 1-CHANNEL 5V RELAY MODULE (สมจริง: ตัวรีเลย์ Songle, Optocoupler, LED, Terminal)
                  ========================================================================= -->
-            <g id="power-rail-5v" transform="translate(32, 540)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="344" height="106" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2" />
-              <text x="172" y="18" font-size="9.5" font-weight="bold" fill="#38bdf8" text-anchor="middle">5V DC &amp; GND POWER RAIL</text>
+            <g id="relay-module" transform="translate(510, 62)" filter="url(#dropShadow)">
+              <!-- Dark Blue/Black Relay Module PCB -->
+              <rect x="0" y="0" width="245" height="150" rx="8" fill="#1e293b" stroke="#0f172a" stroke-width="3" />
+              <rect x="5" y="5" width="235" height="140" rx="5" fill="none" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="1.2" />
 
-              <!-- +5V Red Bus -->
-              <rect x="14" y="28" width="316" height="30" rx="4" fill="#0f172a" stroke="#ef4444" stroke-width="1.5" />
-              <text x="26" y="47" font-size="9.5" font-weight="bold" fill="#f87171">+5V</text>
+              <!-- 4 Corner Brass Mounting Holes -->
+              <circle cx="14" cy="14" r="4.5" fill="#f8fafc" stroke="#eab308" stroke-width="2" />
+              <circle cx="231" cy="14" r="4.5" fill="#f8fafc" stroke="#eab308" stroke-width="2" />
+              <circle cx="14" cy="136" r="4.5" fill="#f8fafc" stroke="#eab308" stroke-width="2" />
+              <circle cx="231" cy="136" r="4.5" fill="#f8fafc" stroke="#eab308" stroke-width="2" />
 
-              <!-- GND Blue Bus -->
-              <rect x="14" y="66" width="316" height="30" rx="4" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5" />
-              <text x="26" y="85" font-size="9.5" font-weight="bold" fill="#60a5fa">GND</text>
+              <!-- Left Side: 3-Pin Control Header (VCC, GND, IN) -->
+              <rect x="10" y="34" width="26" height="82" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
+              <text x="42" y="52" font-size="10" font-weight="bold" fill="#f87171">VCC</text>
+              <text x="42" y="79" font-size="10" font-weight="bold" fill="#94a3b8">GND</text>
+              <text x="42" y="106" font-size="10" font-weight="bold" fill="#facc15">IN</text>
+
+              <!-- Optocoupler & SMD Components -->
+              <rect x="68" y="36" width="20" height="24" rx="2" fill="#0f172a" stroke="#64748b" stroke-width="1.2" />
+              <text x="78" y="51" font-size="6.5" fill="#cbd5e1" text-anchor="middle">817C</text>
+              <!-- Flyback Diode -->
+              <rect x="70" y="72" width="16" height="8" rx="1" fill="#0f172a" />
+              <rect x="82" y="72" width="3" height="8" fill="#cbd5e1" />
+
+              <!-- Status LEDs on Relay Board -->
+              <!-- Power LED (Red) -->
+              <circle id="relay-led-pwr" cx="72" cy="102" r="4.5" fill="#450a0a" stroke="#7f1d1d" stroke-width="1" />
+              <text x="72" y="115" font-size="7.5" fill="#fca5a5" text-anchor="middle">PWR</text>
+
+              <!-- Active/Trigger LED (Green) -->
+              <circle id="relay-led-act" cx="92" cy="102" r="4.5" fill="#052e16" stroke="#14532d" stroke-width="1" />
+              <text x="92" y="115" font-size="7.5" fill="#86efac" text-anchor="middle">ACT</text>
+
+              <!-- Blue Songle Relay Box (SRD-05VDC-SL-C) -->
+              <g transform="translate(105, 22)">
+                <rect x="0" y="0" width="90" height="106" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2.5" />
+                <rect x="4" y="4" width="82" height="98" rx="2" fill="#0ea5e9" fill-opacity="0.3" />
+                <text x="45" y="20" font-size="9.5" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">SONGLE</text>
+                <text x="45" y="32" font-size="7.2" font-weight="bold" fill="#e0f2fe" text-anchor="middle">SRD-05VDC-SL-C</text>
+                <text x="45" y="44" font-size="6.5" fill="#bae6fd" text-anchor="middle">10A 250VAC / 30VDC</text>
+
+                <!-- Internal Contact Schematic Diagram inside Relay Top -->
+                <rect x="10" y="52" width="70" height="44" rx="3" fill="#0369a1" stroke="#38bdf8" stroke-width="1" />
+                <text x="22" y="65" font-size="7" font-weight="bold" fill="#ffffff">NO</text>
+                <text x="22" y="91" font-size="7" font-weight="bold" fill="#ffffff">NC</text>
+                <text x="68" y="78" font-size="7" font-weight="bold" fill="#fde047" text-anchor="end">COM</text>
+
+                <!-- Contact Terminals -->
+                <circle cx="38" cy="63" r="2.5" fill="#ffffff" />
+                <circle cx="38" cy="89" r="2.5" fill="#ffffff" />
+                <circle cx="62" cy="76" r="2.5" fill="#fde047" />
+
+                <!-- Moving Armature Switch Line (Animated via JS: NC default -> NO energized) -->
+                <line id="relay-armature" x1="62" y1="76" x2="38" y2="89" stroke="#fde047" stroke-width="2.5" stroke-linecap="round" />
+              </g>
+
+              <!-- Right Side: Green 3-Pin Screw Terminal Block (NO, COM, NC) -->
+              <g transform="translate(202, 24)">
+                <rect x="0" y="0" width="34" height="102" rx="3" fill="#16a34a" stroke="#15803d" stroke-width="2" />
+                <!-- Labels -->
+                <text x="-6" y="21" font-size="9" font-weight="bold" fill="#86efac" text-anchor="end">NO</text>
+                <text x="-6" y="54" font-size="9" font-weight="bold" fill="#fde047" text-anchor="end">COM</text>
+                <text x="-6" y="87" font-size="9" font-weight="bold" fill="#cbd5e1" text-anchor="end">NC</text>
+              </g>
+
+              <text x="122" y="141" font-size="8.5" font-weight="bold" fill="#94a3b8" text-anchor="middle">1-CHANNEL 5V RELAY MODULE</text>
             </g>
 
             <!-- =========================================================================
-                 4. RELAY #1: 1-Channel 5V Isolation Active HIGH (250V/10A)
+                 3. แหล่งจ่ายไฟ 220VAC + หม้อแปลงแปลงไฟ 220VAC เป็น 12VAC (Transformer)
                  ========================================================================= -->
-            <g id="relay-mod-1" transform="translate(416, 36)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="456" height="162" rx="8" fill="#1e293b" stroke="#0284c7" stroke-width="2.2" />
-              <rect x="0" y="0" width="456" height="24" rx="8" fill="#0369a1" />
-              <rect x="0" y="14" width="456" height="10" fill="#0369a1" />
-              <text x="228" y="16" font-size="9.5" font-weight="bold" fill="#ffffff" text-anchor="middle">
-                Relay 1-Ch 5V Isolation • 250V/10A (Active HIGH)
-              </text>
+            <g id="ac-power-unit" transform="translate(490, 365)" filter="url(#dropShadow)">
+              <!-- Insulated Enclosure Box -->
+              <rect x="0" y="0" width="315" height="225" rx="10" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
+              <rect x="0" y="0" width="315" height="28" rx="10" fill="#334155" />
+              <rect x="0" y="16" width="315" height="12" fill="#334155" />
+              <text x="157" y="19" font-size="11" font-weight="bold" fill="#f8fafc" text-anchor="middle">ชุดแหล่งจ่ายไฟ 220VAC &amp; หม้อแปลง 12VAC (STEP-DOWN)</text>
 
-              <!-- Control Pins -->
-              <rect x="12" y="38" width="24" height="86" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-              <text x="42" y="54" font-size="9" font-weight="bold" fill="#f87171">VCC</text>
-              <text x="42" y="80" font-size="9" font-weight="bold" fill="#94a3b8">GND</text>
-              <text x="42" y="106" font-size="9" font-weight="bold" fill="#facc15">IN1</text>
+              <!-- 220VAC Input & Breaker Section (Left) -->
+              <g transform="translate(16, 42)">
+                <rect x="0" y="0" width="96" height="165" rx="6" fill="#0f172a" stroke="#ef4444" stroke-opacity="0.5" stroke-width="1.5" />
+                <text x="48" y="18" font-size="10" font-weight="bold" fill="#f87171" text-anchor="middle">ไฟบ้าน 220VAC</text>
 
-              <!-- Optocoupler & LEDs -->
-              <rect x="106" y="42" width="30" height="24" rx="2" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2" />
-              <text x="121" y="57" font-size="6.5" font-weight="bold" fill="#38bdf8" text-anchor="middle">ISO817</text>
-              <circle id="r1-led-pwr" cx="112" cy="88" r="4.5" fill="#450a0a" />
-              <text x="112" y="101" font-size="7" fill="#fca5a5" text-anchor="middle">PWR</text>
-              <circle id="r1-led-act" cx="134" cy="88" r="4.5" fill="#052e16" />
-              <text x="134" y="101" font-size="7" fill="#86efac" text-anchor="middle">ACT</text>
+                <!-- 220V Terminals (L, N) -->
+                <rect x="14" y="28" width="68" height="44" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
+                <text x="32" y="42" font-size="9" font-weight="bold" fill="#fca5a5" text-anchor="middle">L (220V)</text>
+                <text x="66" y="42" font-size="9" font-weight="bold" fill="#93c5fd" text-anchor="middle">N (0V)</text>
 
-              <!-- Blue Relay Box -->
-              <g transform="translate(164, 36)">
-                <rect x="0" y="0" width="186" height="104" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
-                <text x="93" y="17" font-size="8.5" font-weight="bold" fill="#ffffff" text-anchor="middle">SRD-05VDC-SL-C (1-CH)</text>
-                <text x="93" y="30" font-size="7.5" font-weight="bold" fill="#fef08a" text-anchor="middle">5V / 70mA • 250VAC 10A</text>
-
-                <rect x="16" y="42" width="154" height="48" rx="3" fill="#0369a1" stroke="#38bdf8" stroke-width="1" />
-                <text x="28" y="58" font-size="8" font-weight="bold" fill="#ffffff">NO</text>
-                <text x="28" y="82" font-size="8" font-weight="bold" fill="#ffffff">NC</text>
-                <text x="155" y="70" font-size="8" font-weight="bold" fill="#fde047" text-anchor="end">COM</text>
-                <circle cx="52" cy="55" r="2.5" fill="#ffffff" />
-                <circle cx="52" cy="79" r="2.5" fill="#ffffff" />
-                <circle cx="128" cy="67" r="2.5" fill="#fde047" />
-                <line id="r1-armature" x1="128" y1="67" x2="52" y2="79" stroke="#fde047" stroke-width="2.5" stroke-linecap="round" />
-              </g>
-
-              <!-- Output Terminals -->
-              <g transform="translate(410, 36)">
-                <rect x="0" y="0" width="34" height="104" rx="3" fill="#16a34a" stroke="#15803d" stroke-width="2" />
-                <text x="-6" y="22" font-size="8.5" font-weight="bold" fill="#86efac" text-anchor="end">NO</text>
-                <text x="-6" y="54" font-size="8.5" font-weight="bold" fill="#fde047" text-anchor="end">COM</text>
-                <text x="-6" y="86" font-size="8.5" font-weight="bold" fill="#cbd5e1" text-anchor="end">NC</text>
-              </g>
-            </g>
-
-            <!-- =========================================================================
-                 5. RELAY #2: 2-Channel 5V Active HIGH (250V/10A)
-                 ========================================================================= -->
-            <g id="relay-mod-2" transform="translate(416, 218)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="456" height="176" rx="8" fill="#1e293b" stroke="#2563eb" stroke-width="2.2" />
-              <rect x="0" y="0" width="456" height="24" rx="8" fill="#1d4ed8" />
-              <rect x="0" y="14" width="456" height="10" fill="#1d4ed8" />
-              <text x="228" y="16" font-size="9.5" font-weight="bold" fill="#ffffff" text-anchor="middle">
-                Relay 2-Ch 5V • 250V/10A (Active HIGH)
-              </text>
-
-              <!-- Control Pins -->
-              <rect x="12" y="38" width="24" height="114" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-              <text x="42" y="54" font-size="8.5" font-weight="bold" fill="#f87171">VCC</text>
-              <text x="42" y="80" font-size="8.5" font-weight="bold" fill="#94a3b8">GND</text>
-              <text x="42" y="106" font-size="8.5" font-weight="bold" fill="#facc15">IN1</text>
-              <text x="42" y="132" font-size="8.5" font-weight="bold" fill="#c084fc">IN2</text>
-
-              <!-- Relay Status Box -->
-              <g transform="translate(115, 38)">
-                <rect x="0" y="0" width="225" height="114" rx="4" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1.8" />
-                <text x="112" y="18" font-size="8.5" font-weight="bold" fill="#ffffff" text-anchor="middle">2-CHANNEL RELAY (10A / CH)</text>
-                <text x="112" y="31" font-size="7.5" font-weight="bold" fill="#fef08a" text-anchor="middle">5V / 70mA per Ch</text>
-
-                <circle id="r2-ch1-led" cx="24" cy="60" r="5" fill="#052e16" />
-                <text id="r2-ch1-txt" x="36" y="63" font-size="8" font-weight="bold" fill="#93c5fd">CH1: OFF</text>
-
-                <circle id="r2-ch2-led" cx="24" cy="88" r="5" fill="#052e16" />
-                <text id="r2-ch2-txt" x="36" y="91" font-size="8" font-weight="bold" fill="#93c5fd">CH2: OFF</text>
-              </g>
-
-              <!-- Output Terminals -->
-              <g transform="translate(410, 34)">
-                <rect x="0" y="0" width="34" height="122" rx="3" fill="#16a34a" stroke="#15803d" stroke-width="2" />
-                <text x="-6" y="19" font-size="8" font-weight="bold" fill="#86efac" text-anchor="end">CH1 NO</text>
-                <text x="-6" y="47" font-size="8" font-weight="bold" fill="#fde047" text-anchor="end">CH1 COM</text>
-                <text x="-6" y="78" font-size="8" font-weight="bold" fill="#86efac" text-anchor="end">CH2 NO</text>
-                <text x="-6" y="106" font-size="8" font-weight="bold" fill="#fde047" text-anchor="end">CH2 COM</text>
-              </g>
-            </g>
-
-            <!-- =========================================================================
-                 6. RELAY #3: 4-Channel 5V Isolation Control (250V/10A Active HIGH)
-                 ========================================================================= -->
-            <g id="relay-mod-4" transform="translate(416, 414)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="456" height="222" rx="8" fill="#1e293b" stroke="#0d9488" stroke-width="2.2" />
-              <rect x="0" y="0" width="456" height="24" rx="8" fill="#0f766e" />
-              <rect x="0" y="14" width="456" height="10" fill="#0f766e" />
-              <text x="228" y="16" font-size="9.5" font-weight="bold" fill="#ffffff" text-anchor="middle">
-                Relay 4-Ch 5V Isolation • 250V/10A (Active HIGH)
-              </text>
-
-              <!-- Control Pins -->
-              <rect x="12" y="38" width="24" height="160" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-              <text x="42" y="53" font-size="8" font-weight="bold" fill="#f87171">VCC</text>
-              <text x="42" y="77" font-size="8" font-weight="bold" fill="#94a3b8">GND</text>
-              <text x="42" y="101" font-size="8" font-weight="bold" fill="#facc15">IN1</text>
-              <text x="42" y="125" font-size="8" font-weight="bold" fill="#c084fc">IN2</text>
-              <text x="42" y="149" font-size="8" font-weight="bold" fill="#38bdf8">IN3</text>
-              <text x="42" y="173" font-size="8" font-weight="bold" fill="#86efac">IN4</text>
-
-              <!-- 4-Channel Isolation Core Box -->
-              <g transform="translate(115, 38)">
-                <rect x="0" y="0" width="225" height="160" rx="4" fill="#115e59" stroke="#14b8a6" stroke-width="1.8" />
-                <text x="112" y="18" font-size="8.5" font-weight="bold" fill="#ffffff" text-anchor="middle">4-CH OPTO ISOLATION (10A / CH)</text>
-                <text x="112" y="31" font-size="7.5" font-weight="bold" fill="#fef08a" text-anchor="middle">5V / 75mA per Ch</text>
-
-                <circle id="r4-ch1-led" cx="22" cy="58" r="4.5" fill="#052e16" />
-                <text id="r4-ch1-txt" x="34" y="61" font-size="8" font-weight="bold" fill="#ccfbf1">CH1: OFF</text>
-
-                <circle id="r4-ch2-led" cx="22" cy="84" r="4.5" fill="#052e16" />
-                <text id="r4-ch2-txt" x="34" y="87" font-size="8" font-weight="bold" fill="#ccfbf1">CH2: OFF</text>
-
-                <circle id="r4-ch3-led" cx="22" cy="110" r="4.5" fill="#052e16" />
-                <text id="r4-ch3-txt" x="34" y="113" font-size="8" font-weight="bold" fill="#ccfbf1">CH3: OFF</text>
-
-                <circle id="r4-ch4-led" cx="22" cy="136" r="4.5" fill="#052e16" />
-                <text id="r4-ch4-txt" x="34" y="139" font-size="8" font-weight="bold" fill="#ccfbf1">CH4: OFF</text>
-              </g>
-
-              <!-- Output Terminals -->
-              <g transform="translate(410, 36)">
-                <rect x="0" y="0" width="34" height="164" rx="3" fill="#16a34a" stroke="#15803d" stroke-width="2" />
-                <text x="-6" y="16" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">CH1 NO</text>
-                <text x="-6" y="36" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">CH1 COM</text>
-                <text x="-6" y="56" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">CH2 NO</text>
-                <text x="-6" y="76" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">CH2 COM</text>
-                <text x="-6" y="96" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">CH3 NO</text>
-                <text x="-6" y="116" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">CH3 COM</text>
-                <text x="-6" y="136" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">CH4 NO</text>
-                <text x="-6" y="156" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">CH4 COM</text>
-              </g>
-            </g>
-
-            <!-- =========================================================================
-                 7. RELAY #4: Relay Module Shield 250V/10A Active LOW for Arduino
-                 ========================================================================= -->
-            <g id="relay-mod-shield" transform="translate(416, 656)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="456" height="248" rx="8" fill="#1e1b4b" stroke="#6366f1" stroke-width="2.5" />
-              <rect x="0" y="0" width="456" height="26" rx="8" fill="#4338ca" />
-              <rect x="0" y="14" width="456" height="12" fill="#4338ca" />
-              <text x="228" y="17" font-size="9.5" font-weight="bold" fill="#ffffff" text-anchor="middle">
-                Relay Shield 250V/10A • Active LOW
-              </text>
-
-              <!-- Control Pins -->
-              <rect x="12" y="42" width="24" height="168" rx="3" fill="#0f172a" stroke="#818cf8" stroke-width="1.5" />
-              <text x="42" y="58" font-size="8" font-weight="bold" fill="#f87171">5V</text>
-              <text x="42" y="83" font-size="8" font-weight="bold" fill="#94a3b8">GND</text>
-              <text x="42" y="108" font-size="8" font-weight="bold" fill="#fde047">IN1 (LOW)</text>
-              <text x="42" y="133" font-size="8" font-weight="bold" fill="#c084fc">IN2 (LOW)</text>
-              <text x="42" y="158" font-size="8" font-weight="bold" fill="#38bdf8">IN3 (LOW)</text>
-              <text x="42" y="183" font-size="8" font-weight="bold" fill="#86efac">IN4 (LOW)</text>
-
-              <!-- Shield Status Box -->
-              <g transform="translate(126, 42)">
-                <rect x="0" y="0" width="214" height="176" rx="5" fill="#312e81" stroke="#6366f1" stroke-width="1.8" />
-                <text x="107" y="18" font-size="8.5" font-weight="bold" fill="#ffffff" text-anchor="middle">ARDUINO RELAY SHIELD</text>
-                <text x="107" y="31" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="middle">ACTIVE LOW (0V = ON) • 10A/CH</text>
-
-                <circle id="rs-ch1-led" cx="22" cy="62" r="4.5" fill="#052e16" />
-                <text id="rs-ch1-txt" x="34" y="65" font-size="8" font-weight="bold" fill="#e0e7ff">R1: OFF (HIGH)</text>
-
-                <circle id="rs-ch2-led" cx="22" cy="90" r="4.5" fill="#052e16" />
-                <text id="rs-ch2-txt" x="34" y="93" font-size="8" font-weight="bold" fill="#e0e7ff">R2: OFF (HIGH)</text>
-
-                <circle id="rs-ch3-led" cx="22" cy="118" r="4.5" fill="#052e16" />
-                <text id="rs-ch3-txt" x="34" y="121" font-size="8" font-weight="bold" fill="#e0e7ff">R3: OFF (HIGH)</text>
-
-                <circle id="rs-ch4-led" cx="22" cy="146" r="4.5" fill="#052e16" />
-                <text id="rs-ch4-txt" x="34" y="149" font-size="8" font-weight="bold" fill="#e0e7ff">R4: OFF (HIGH)</text>
-              </g>
-
-              <!-- Shield Output Screw Terminals -->
-              <g transform="translate(410, 40)">
-                <rect x="0" y="0" width="34" height="178" rx="3" fill="#16a34a" stroke="#15803d" stroke-width="2" />
-                <text x="-6" y="18" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">R1 NO</text>
-                <text x="-6" y="40" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">R1 COM</text>
-                <text x="-6" y="62" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">R2 NO</text>
-                <text x="-6" y="84" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">R2 COM</text>
-                <text x="-6" y="106" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">R3 NO</text>
-                <text x="-6" y="128" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">R3 COM</text>
-                <text x="-6" y="150" font-size="7.5" font-weight="bold" fill="#86efac" text-anchor="end">R4 NO</text>
-                <text x="-6" y="170" font-size="7.5" font-weight="bold" fill="#fde047" text-anchor="end">R4 COM</text>
-              </g>
-            </g>
-
-            <!-- =========================================================================
-                 8. 12VAC SYSTEM (220VAC -> 12VAC 3.00A + Lamp 12VAC + Fan 12VAC)
-                 ========================================================================= -->
-            <g id="system-12vac" transform="translate(918, 36)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="596" height="416" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="2.2" />
-              <rect x="0" y="0" width="596" height="26" rx="10" fill="#b45309" />
-              <rect x="0" y="14" width="596" height="12" fill="#b45309" />
-              <text x="298" y="17" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">
-                12VAC POWER &amp; LOADS (220VAC → 12VAC / 3.00A MAX)
-              </text>
-
-              <!-- 12VAC Transformer & Breaker -->
-              <g transform="translate(14, 38)">
-                <rect x="0" y="0" width="204" height="362" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-                <text x="102" y="18" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">TRANSFORMER 12VAC</text>
-                <text x="102" y="30" font-size="8" font-weight="bold" fill="#86efac" text-anchor="middle">12V AC • 3.00A (36VA)</text>
-
-                <!-- Breaker 220VAC -->
-                <g id="acBreakerSwitch" class="cursor-pointer" transform="translate(62, 42)" title="คลิกเพื่อเปิด/ปิดเบรกเกอร์ 12VAC">
-                  <rect x="0" y="0" width="80" height="72" rx="6" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
-                  <text x="40" y="14" font-size="8" font-weight="bold" fill="#e2e8f0" text-anchor="middle">AC 220V SW</text>
-                  <rect x="24" y="20" width="32" height="34" rx="3" fill="#0f172a" />
-                  <rect id="acBreakerHandle" x="27" y="36" width="26" height="16" rx="2" fill="#ef4444" stroke="#ffffff" stroke-width="1" />
-                  <text id="acBreakerText" x="40" y="66" font-size="8.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">OFF</text>
+                <!-- Interactive Main Breaker Switch -->
+                <g id="mainBreakerSwitch" class="cursor-pointer" transform="translate(18, 84)" title="คลิกเพื่อเปิด/ปิดเบรกเกอร์ไฟหลัก 220VAC">
+                  <rect x="0" y="0" width="60" height="68" rx="5" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+                  <text x="30" y="13" font-size="8" font-weight="bold" fill="#e2e8f0" text-anchor="middle">BREAKER</text>
+                  <!-- Switch Slot -->
+                  <rect x="16" y="18" width="28" height="34" rx="3" fill="#0f172a" />
+                  <!-- Toggle Handle (Moves up/down) -->
+                  <rect id="breakerHandle" x="19" y="34" width="22" height="16" rx="2" fill="#ef4444" stroke="#ffffff" stroke-width="1" />
+                  <text id="breakerText" x="30" y="63" font-size="8.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">OFF</text>
                 </g>
-
-                <!-- Iron Core Graphic -->
-                <g transform="translate(52, 126)">
-                  <rect x="12" y="8" width="76" height="96" rx="4" fill="url(#steelCoreGrad)" stroke="#475569" stroke-width="2" />
-                  <rect x="4" y="18" width="32" height="76" rx="4" fill="url(#copperGrad)" />
-                  <text x="20" y="58" font-size="7.5" font-weight="bold" fill="#fef3c7" text-anchor="middle" transform="rotate(-90 20 58)">220V</text>
-                  <rect x="64" y="18" width="32" height="76" rx="4" fill="url(#copperGrad)" />
-                  <text x="80" y="58" font-size="7.5" font-weight="bold" fill="#fef3c7" text-anchor="middle" transform="rotate(-90 80 58)">12V 3A</text>
-                </g>
-
-                <!-- 12VAC Output Terminals -->
-                <rect x="22" y="242" width="160" height="106" rx="6" fill="#1e293b" stroke="#eab308" stroke-width="1.5" />
-                <text x="102" y="260" font-size="9" font-weight="bold" fill="#fde047" text-anchor="middle">12VAC OUTPUT (3A)</text>
-                <text x="62" y="282" font-size="9" font-weight="bold" fill="#fde047" text-anchor="middle">AC1</text>
-                <text x="142" y="282" font-size="9" font-weight="bold" fill="#93c5fd" text-anchor="middle">AC2</text>
-                <circle id="ac-tx-led" cx="102" cy="332" r="5" fill="#422006" />
               </g>
 
-              <!-- Load AC 1: Lamp 12VAC (10W / 0.83A) -->
-              <g transform="translate(230, 38)">
-                <rect x="0" y="0" width="170" height="362" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-                <text x="85" y="18" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">LAMP 12VAC</text>
-                <text x="85" y="31" font-size="8" font-weight="bold" fill="#86efac" text-anchor="middle">10W • 0.83A</text>
+              <!-- Internal Wires from Breaker to Transformer Primary -->
+              <path d="M 112 95 H 132" stroke="#ef4444" stroke-width="3" />
+              <path d="M 112 145 H 132" stroke="#3b82f6" stroke-width="3" />
 
-                <circle id="ac-bulb-glow-outer" cx="85" cy="115" r="82" fill="url(#bulbLightGlow)" opacity="0" pointer-events="none" />
-                <rect x="62" y="172" width="46" height="38" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="2" />
-                <path d="M 64 172 C 64 154, 42 138, 42 110 A 43 43 0 1 1 128 110 C 128 138, 106 154, 106 172 Z" fill="url(#bulbGlassGrad)" stroke="#94a3b8" stroke-width="2" />
-                <circle id="ac-bulb-glow-inner" cx="85" cy="110" r="30" fill="#fef08a" opacity="0" pointer-events="none" />
-                <path id="ac-bulb-filament" d="M 73 112 Q 77 100 80 112 Q 83 100 85 112 Q 88 100 91 112 Q 94 100 97 112" fill="none" stroke="#475569" stroke-width="2.5" />
+              <!-- Step-Down Iron Core Transformer (220VAC -> 12VAC) -->
+              <g transform="translate(132, 52)">
+                <!-- Laminated Steel E-I Core -->
+                <rect x="8" y="12" width="76" height="116" rx="4" fill="url(#steelCoreGrad)" stroke="#475569" stroke-width="2" />
+                <!-- Mounting Brackets -->
+                <rect x="2" y="118" width="88" height="12" rx="2" fill="#64748b" />
+                <!-- Primary Copper Coil (Left) -->
+                <rect x="0" y="26" width="32" height="86" rx="4" fill="url(#copperGrad)" stroke="#78350f" stroke-width="1.5" />
+                <text x="16" y="72" font-size="8" font-weight="bold" fill="#fef3c7" text-anchor="middle" transform="rotate(-90 16 72)">220V PRI</text>
+                <!-- Secondary Copper Coil (Right) -->
+                <rect x="60" y="26" width="32" height="86" rx="4" fill="url(#copperGrad)" stroke="#78350f" stroke-width="1.5" />
+                <text x="76" y="72" font-size="8" font-weight="bold" fill="#fef3c7" text-anchor="middle" transform="rotate(-90 76 72)">12V SEC</text>
 
-                <rect x="18" y="242" width="134" height="106" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
-                <text x="85" y="260" font-size="8.5" font-weight="bold" fill="#f8fafc" text-anchor="middle">12VAC LAMP</text>
-                <text x="52" y="282" font-size="8.5" font-weight="bold" fill="#fde047" text-anchor="middle">L1</text>
-                <text x="118" y="282" font-size="8.5" font-weight="bold" fill="#93c5fd" text-anchor="middle">L2</text>
-                <text id="ac-lamp-status-txt" x="85" y="334" font-size="8" font-weight="bold" fill="#94a3b8" text-anchor="middle">OFF (0.00A)</text>
+                <text x="46" y="144" font-size="8.5" font-weight="bold" fill="#cbd5e1" text-anchor="middle">220V → 12VAC</text>
               </g>
 
-              <!-- Load AC 2: Fan 12VAC (12W / 1.00A) -->
-              <g transform="translate(412, 38)">
-                <rect x="0" y="0" width="170" height="362" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-                <text x="85" y="18" font-size="9.5" font-weight="bold" fill="#38bdf8" text-anchor="middle">FAN 12VAC</text>
-                <text x="85" y="31" font-size="8" font-weight="bold" fill="#86efac" text-anchor="middle">12W • 1.00A</text>
+              <!-- Internal Wires from Transformer Secondary to 12VAC Output -->
+              <path d="M 224 95 H 242" stroke="#facc15" stroke-width="3" />
+              <path d="M 224 145 H 242" stroke="#facc15" stroke-width="3" />
 
-                <rect x="20" y="48" width="130" height="130" rx="12" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
-                <g id="ac-fan-blades">
-                  <path d="M 85 113 C 68 72, 106 62, 113 95 C 116 105, 98 111, 85 113 Z" fill="#38bdf8" />
-                  <path d="M 85 113 C 126 96, 136 134, 103 141 C 93 144, 87 126, 85 113 Z" fill="#0ea5e9" />
-                  <path d="M 85 113 C 102 154, 64 164, 57 131 C 54 121, 72 115, 85 113 Z" fill="#38bdf8" />
-                  <path d="M 85 113 C 44 130, 34 92, 67 85 C 77 82, 83 100, 85 113 Z" fill="#0ea5e9" />
-                </g>
-                <circle cx="85" cy="113" r="16" fill="#334155" stroke="#94a3b8" stroke-width="2" />
-                <text x="85" y="116" font-size="7" font-weight="bold" fill="#e0f2fe" text-anchor="middle">12VAC</text>
+              <!-- 12VAC Output Terminal Block (Right) -->
+              <g transform="translate(242, 42)">
+                <rect x="0" y="0" width="58" height="165" rx="6" fill="#0f172a" stroke="#eab308" stroke-opacity="0.6" stroke-width="1.5" />
+                <text x="29" y="18" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">12VAC</text>
+                <text x="29" y="30" font-size="8" fill="#cbd5e1" text-anchor="middle">OUTPUT</text>
 
-                <rect x="18" y="242" width="134" height="106" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
-                <text x="85" y="260" font-size="8.5" font-weight="bold" fill="#f8fafc" text-anchor="middle">12VAC FAN</text>
-                <text x="52" y="282" font-size="8.5" font-weight="bold" fill="#38bdf8" text-anchor="middle">F1</text>
-                <text x="118" y="282" font-size="8.5" font-weight="bold" fill="#93c5fd" text-anchor="middle">F2</text>
-                <text id="ac-fan-status-txt" x="85" y="334" font-size="8" font-weight="bold" fill="#94a3b8" text-anchor="middle">OFF (0.00A)</text>
+                <!-- AC1 & AC2 Terminal Labels -->
+                <text x="29" y="54" font-size="9" font-weight="bold" fill="#fde047" text-anchor="middle">AC1</text>
+                <text x="29" y="112" font-size="9" font-weight="bold" fill="#fde047" text-anchor="middle">AC2</text>
+
+                <!-- Output Status Indicator -->
+                <circle id="tx-led" cx="29" cy="148" r="5" fill="#422006" stroke="#713f12" stroke-width="1" />
               </g>
             </g>
 
             <!-- =========================================================================
-                 9. 12VDC BATTERY SYSTEM (12.0V DC 5.00A + LED 12VDC + Fan 12VDC)
+                 4. หลอดไฟ 12VAC (12VAC Glass Incandescent Lamp & Socket Base)
                  ========================================================================= -->
-            <g id="system-12vdc" transform="translate(918, 480)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="596" height="424" rx="10" fill="#1e293b" stroke="#ef4444" stroke-width="2.2" />
-              <rect x="0" y="0" width="596" height="26" rx="10" fill="#b91c1c" />
-              <rect x="0" y="14" width="596" height="12" fill="#b91c1c" />
-              <text x="298" y="17" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">
-                12VDC BATTERY &amp; LOADS (12.0V DC / 5.00A MAX)
-              </text>
+            <g id="lamp-12vac" transform="translate(845, 195)" filter="url(#dropShadow)">
+              <!-- Mounting Base Plate -->
+              <rect x="10" y="195" width="160" height="125" rx="10" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
+              <text x="90" y="218" font-size="11" font-weight="bold" fill="#f8fafc" text-anchor="middle">หลอดไฟ 12VAC (10W)</text>
 
-              <!-- 12VDC Battery & Switch -->
-              <g transform="translate(14, 38)">
-                <rect x="0" y="0" width="204" height="370" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-                <text x="102" y="18" font-size="9.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">BATTERY 12VDC</text>
-                <text x="102" y="30" font-size="8" font-weight="bold" fill="#86efac" text-anchor="middle">12.0V DC • 5.00A (60W)</text>
+              <!-- Screw Terminal Block on Lamp Base -->
+              <rect x="30" y="232" width="120" height="58" rx="6" fill="#0f172a" stroke="#64748b" stroke-width="1.5" />
+              <text x="58" y="250" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">ขั้ว 1 (L1)</text>
+              <text x="122" y="250" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">ขั้ว 2 (L2)</text>
 
-                <!-- Battery Switch -->
-                <g id="dcBatterySwitch" class="cursor-pointer" transform="translate(62, 42)" title="คลิกเพื่อเปิด/ปิดสวิตช์แบตเตอรี่ 12VDC">
-                  <rect x="0" y="0" width="80" height="72" rx="6" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
-                  <text x="40" y="14" font-size="8" font-weight="bold" fill="#e2e8f0" text-anchor="middle">12VDC SW</text>
-                  <rect x="24" y="20" width="32" height="34" rx="3" fill="#0f172a" />
-                  <rect id="dcBreakerHandle" x="27" y="36" width="26" height="16" rx="2" fill="#ef4444" stroke="#ffffff" stroke-width="1" />
-                  <text id="dcBreakerText" x="40" y="66" font-size="8.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">OFF</text>
-                </g>
+              <!-- Ceramic / Brass E27 Lamp Holder Socket -->
+              <rect x="64" y="152" width="52" height="45" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="2" />
+              <line x1="64" y1="163" x2="116" y2="163" stroke="#64748b" stroke-width="2" />
+              <line x1="64" y1="174" x2="116" y2="174" stroke="#64748b" stroke-width="2" />
+              <line x1="64" y1="185" x2="116" y2="185" stroke="#64748b" stroke-width="2" />
 
-                <!-- Battery Graphic -->
-                <g transform="translate(42, 126)">
-                  <rect x="14" y="0" width="22" height="12" rx="2" fill="#dc2626" />
-                  <rect x="84" y="0" width="22" height="12" rx="2" fill="#334155" />
-                  <rect x="0" y="12" width="120" height="94" rx="6" fill="#991b1b" stroke="#f87171" stroke-width="2" />
-                  <rect x="0" y="12" width="120" height="22" rx="4" fill="#1e293b" />
-                  <text x="25" y="27" font-size="11" font-weight="bold" fill="#f87171" text-anchor="middle">+12V</text>
-                  <text x="95" y="27" font-size="11" font-weight="bold" fill="#93c5fd" text-anchor="middle">GND -</text>
-                  <text x="60" y="62" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">12.0V DC</text>
-                  <text x="60" y="78" font-size="9" font-weight="bold" fill="#fde047" text-anchor="middle">BATTERY 5.0A</text>
-                </g>
+              <!-- Outer Ambient Glow Circle (Visible when bulb is ON) -->
+              <circle id="bulb-glow-outer" cx="90" cy="85" r="105" fill="url(#bulbLightGlow)" opacity="0" pointer-events="none" />
 
-                <!-- 12VDC Output Terminals -->
-                <rect x="22" y="246" width="160" height="110" rx="6" fill="#1e293b" stroke="#f87171" stroke-width="1.5" />
-                <text x="102" y="264" font-size="9" font-weight="bold" fill="#fca5a5" text-anchor="middle">12VDC OUTPUT (5A)</text>
-                <text x="62" y="286" font-size="9" font-weight="bold" fill="#f87171" text-anchor="middle">+12V</text>
-                <text x="142" y="286" font-size="9" font-weight="bold" fill="#94a3b8" text-anchor="middle">GND</text>
-                <circle id="dc-batt-led" cx="102" cy="338" r="5" fill="#450a0a" />
-              </g>
+              <!-- Glass Bulb Envelope -->
+              <path
+                d="M 66 152
+                   C 66 132, 42 115, 42 82
+                   A 48 48 0 1 1 138 82
+                   C 138 115, 114 132, 114 152 Z"
+                fill="url(#bulbGlassGrad)"
+                stroke="#94a3b8"
+                stroke-width="2.2"
+              />
 
-              <!-- Load DC 1: LED 12VDC (6W / 0.50A) -->
-              <g transform="translate(230, 38)">
-                <rect x="0" y="0" width="170" height="370" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-                <text x="85" y="18" font-size="9.5" font-weight="bold" fill="#86efac" text-anchor="middle">LED 12VDC</text>
-                <text x="85" y="31" font-size="8" font-weight="bold" fill="#fde047" text-anchor="middle">6W • 0.50A</text>
+              <!-- Inner Bright Core Glow -->
+              <circle id="bulb-glow-inner" cx="90" cy="82" r="36" fill="#fef08a" opacity="0" pointer-events="none" />
 
-                <!-- LED Module Graphic -->
-                <circle id="dc-led-glow" cx="85" cy="118" r="76" fill="url(#ledDcGlow)" opacity="0" pointer-events="none" />
-                <rect x="32" y="64" width="106" height="108" rx="12" fill="#1e293b" stroke="#22c55e" stroke-width="2" />
-                <circle id="dc-led-chip-1" cx="63" cy="96" r="12" fill="#14532d" stroke="#86efac" stroke-width="1.5" />
-                <circle id="dc-led-chip-2" cx="107" cy="96" r="12" fill="#14532d" stroke="#86efac" stroke-width="1.5" />
-                <circle id="dc-led-chip-3" cx="63" cy="140" r="12" fill="#14532d" stroke="#86efac" stroke-width="1.5" />
-                <circle id="dc-led-chip-4" cx="107" cy="140" r="12" fill="#14532d" stroke="#86efac" stroke-width="1.5" />
+              <!-- Internal Glass Stem & Support Wires -->
+              <path d="M 83 152 L 85 112 H 95 L 97 152" fill="none" stroke="#cbd5e1" stroke-width="2" />
+              <line x1="85" y1="112" x2="77" y2="85" stroke="#64748b" stroke-width="1.5" />
+              <line x1="95" y1="112" x2="103" y2="85" stroke="#64748b" stroke-width="1.5" />
 
-                <rect x="18" y="246" width="134" height="110" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
-                <text x="85" y="264" font-size="8.5" font-weight="bold" fill="#f8fafc" text-anchor="middle">12VDC LED</text>
-                <text x="52" y="286" font-size="8.5" font-weight="bold" fill="#f87171" text-anchor="middle">LED +</text>
-                <text x="118" y="286" font-size="8.5" font-weight="bold" fill="#94a3b8" text-anchor="middle">LED -</text>
-                <text id="dc-led-status-txt" x="85" y="340" font-size="8" font-weight="bold" fill="#94a3b8" text-anchor="middle">OFF (0.00A)</text>
-              </g>
+              <!-- Tungsten Filament (Glows bright orange-yellow when energized) -->
+              <path
+                id="bulb-filament"
+                d="M 77 85 Q 81 72 84 85 Q 87 72 90 85 Q 93 72 96 85 Q 100 72 103 85"
+                fill="none"
+                stroke="#475569"
+                stroke-width="2.6"
+                stroke-linecap="round"
+              />
 
-              <!-- Load DC 2: Fan 12VDC (6W / 0.50A) -->
-              <g transform="translate(412, 38)">
-                <rect x="0" y="0" width="170" height="370" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1.5" />
-                <text x="85" y="18" font-size="9.5" font-weight="bold" fill="#38bdf8" text-anchor="middle">FAN 12VDC</text>
-                <text x="85" y="31" font-size="8" font-weight="bold" fill="#fde047" text-anchor="middle">6W • 0.50A</text>
-
-                <rect x="20" y="54" width="130" height="130" rx="12" fill="#1e293b" stroke="#ef4444" stroke-width="2" />
-                <g id="dc-fan-blades">
-                  <path d="M 85 119 C 68 78, 106 68, 113 101 C 116 111, 98 117, 85 119 Z" fill="#f87171" />
-                  <path d="M 85 119 C 126 102, 136 140, 103 147 C 93 150, 87 132, 85 119 Z" fill="#ef4444" />
-                  <path d="M 85 119 C 102 160, 64 170, 57 137 C 54 127, 72 121, 85 119 Z" fill="#f87171" />
-                  <path d="M 85 119 C 44 136, 34 98, 67 91 C 77 88, 83 106, 85 119 Z" fill="#ef4444" />
-                </g>
-                <circle cx="85" cy="119" r="16" fill="#334155" stroke="#fca5a5" stroke-width="2" />
-                <text x="85" y="122" font-size="7" font-weight="bold" fill="#fecaca" text-anchor="middle">12VDC</text>
-
-                <rect x="18" y="246" width="134" height="110" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5" />
-                <text x="85" y="264" font-size="8.5" font-weight="bold" fill="#f8fafc" text-anchor="middle">12VDC FAN</text>
-                <text x="52" y="286" font-size="8.5" font-weight="bold" fill="#f87171" text-anchor="middle">+12V</text>
-                <text x="118" y="286" font-size="8.5" font-weight="bold" fill="#94a3b8" text-anchor="middle">GND</text>
-                <text id="dc-fan-status-txt" x="85" y="340" font-size="8" font-weight="bold" fill="#94a3b8" text-anchor="middle">OFF (0.00A)</text>
-              </g>
+              <!-- Glass Specular Highlight -->
+              <path d="M 56 68 A 34 34 0 0 1 82 44" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.7" />
             </g>
 
-            <!-- Dynamic Wire & Pin Layers -->
+            <!-- =========================================================================
+                 DYNAMIC LAYERS: PINS, DRAWN WIRES, & ACTIVE DRAG PREVIEW WIRE
+                 ========================================================================= -->
             <g id="pinsLayer"></g>
             <g id="wiresLayer"></g>
-            <g id="waypointsLayer"></g>
             <path id="previewWire" d="" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round" stroke-dasharray="6 4" pointer-events="none" opacity="0" />
           </svg>
+        </div>
+      </div>
+
+      <!-- Bottom Quick Guide & Live Electrical Diagnostics -->
+      <div class="bg-slate-900 border-t border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div id="circuitDiagnosis" class="flex items-center gap-2 text-amber-300 font-medium">
+          <span>⚠️ สถานะวงจร: กรุณาต่อสายไฟให้ครบ (หรือกด "ต่อวงจรอัตโนมัติ") และเปิดเบรกเกอร์ 220VAC</span>
+        </div>
+        <div class="text-slate-400">
+          สายไฟที่เชื่อมต่อแล้ว: <span id="wireCount" class="text-white font-bold">0</span> เส้น
         </div>
       </div>
     </section>
 
     <!-- RIGHT: Arduino C++ Code Editor & Serial Monitor -->
-    <aside class="lg:col-span-4 bg-slate-900 flex flex-col h-[560px] lg:h-auto">
-
+    <aside class="lg:col-span-4 bg-slate-900 flex flex-col h-[540px] lg:h-auto">
+      
+      <!-- IDE Header & Run/Stop Controls -->
       <div class="px-4 py-3 bg-slate-800/90 border-b border-slate-700 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded bg-teal-600/30 text-teal-300 border border-teal-500/40 text-xs font-bold code-font">full_system_12vac_12vdc.ino</span>
+          <span class="px-2 py-0.5 rounded bg-teal-600/30 text-teal-300 border border-teal-500/40 text-xs font-bold code-font">sketch_relay.ino</span>
+          <span class="text-xs text-slate-400 hidden sm:inline">C++ (Arduino)</span>
         </div>
 
         <div class="flex items-center gap-2">
@@ -705,92 +523,48 @@
         </div>
       </div>
 
-      <div class="px-4 py-2 bg-slate-950/60 border-b border-slate-800 flex flex-wrap items-center justify-between gap-1.5 text-xs">
-        <span class="text-slate-400">โค้ดตัวอย่าง:</span>
-        <div class="flex flex-wrap gap-1">
-          <button id="presetAllSequence" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">รันสลับ 4 โหลด</button>
-          <button id="presetAllOn" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">เปิดค้างทั้งหมด</button>
-          <button id="presetAcDcSplit" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">สลับชุด 12VAC / 12VDC</button>
+      <!-- Preset Code Selector -->
+      <div class="px-4 py-2 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between gap-2 text-xs">
+        <span class="text-slate-400">ตัวอย่างโค้ด:</span>
+        <div class="flex gap-1.5">
+          <button id="presetBlink" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">ไฟกระพริบ (2 วิ)</button>
+          <button id="presetAlwaysOn" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">เปิดค้าง (ON)</button>
+          <button id="presetFast" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">ทดสอบเร็ว (0.6 วิ)</button>
         </div>
       </div>
 
+      <!-- C++ Code Editor Textarea -->
       <div class="relative flex-1 flex bg-[#0d1323] overflow-hidden">
+        <!-- Line Numbers -->
         <div id="lineNumbers" class="py-3 px-2.5 text-right text-xs code-font text-slate-600 bg-slate-950/80 select-none border-r border-slate-800/80 leading-6">
-          1
+          1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12<br>13<br>14<br>15<br>16<br>17<br>18
         </div>
+        <!-- Editable C++ Code Area -->
         <textarea
           id="cppEditor"
           spellcheck="false"
           class="flex-1 p-3 bg-transparent text-emerald-300 code-font text-xs sm:text-[13px] leading-6 focus:outline-none resize-none whitespace-pre overflow-auto"
-        >// D7 -> Relay 1-Ch (Active HIGH) -> หลอดไฟ 12VAC (0.83A)
-// D6 -> Relay 2-Ch CH1 (Active HIGH) -> พัดลม 12VAC (1.00A)
-// D5 -> Relay 4-Ch Isolation IN1 (Active HIGH) -> LED 12VDC (0.50A)
-// D4 -> Relay Shield IN1 (Active LOW: LOW=ON, HIGH=OFF) -> พัดลม 12VDC (0.50A)
-
-int r1_LampAC = 7;
-int r2_FanAC  = 6;
-int r4_LedDC  = 5;
-int rs_FanDC  = 4; // Active LOW Shield
+        >// โปรแกรมควบคุม Relay 5V เปิด-ปิดหลอดไฟ 12VAC
+int relayPin = 7; // ต่อขา D7 ของ Arduino เข้ากับขา IN ของ Relay
 
 void setup() {
   Serial.begin(9600);
-  pinMode(r1_LampAC, OUTPUT);
-  pinMode(r2_FanAC, OUTPUT);
-  pinMode(r4_LedDC, OUTPUT);
-  pinMode(rs_FanDC, OUTPUT);
-
-  digitalWrite(r1_LampAC, LOW);
-  digitalWrite(r2_FanAC, LOW);
-  digitalWrite(r4_LedDC, LOW);
-  digitalWrite(rs_FanDC, HIGH);
-
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("ALL 4 RELAYS READY");
-  display.println("12VAC & 12VDC OK");
-  display.display();
-  Serial.println("System Ready");
+  pinMode(relayPin, OUTPUT);
+  Serial.println("System Ready: Arduino + Relay 12VAC");
 }
 
 void loop() {
-  digitalWrite(r1_LampAC, HIGH);
-  digitalWrite(r2_FanAC, HIGH);
-  digitalWrite(r4_LedDC, LOW);
-  digitalWrite(rs_FanDC, HIGH);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("12VAC: ON (1.83A)");
-  display.println("12VDC: OFF (0.00A)");
-  display.display();
-  Serial.println("12VAC Active (1.83A)");
-  delay(2200);
+  digitalWrite(relayPin, HIGH); // สั่ง Relay ทำงาน (หน้าสัมผัส COM -> NO)
+  Serial.println("Relay: ON -> หลอดไฟ 12VAC ติด");
+  delay(2000);                  // หน่วงเวลา 2 วินาที
 
-  digitalWrite(r1_LampAC, LOW);
-  digitalWrite(r2_FanAC, LOW);
-  digitalWrite(r4_LedDC, HIGH);
-  digitalWrite(rs_FanDC, LOW);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("12VAC: OFF (0.00A)");
-  display.println("12VDC: ON (1.00A)");
-  display.display();
-  Serial.println("12VDC Battery Active (1.00A)");
-  delay(2200);
-
-  digitalWrite(r1_LampAC, HIGH);
-  digitalWrite(r2_FanAC, HIGH);
-  digitalWrite(r4_LedDC, HIGH);
-  digitalWrite(rs_FanDC, LOW);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("ALL 4 LOADS: ON");
-  display.println("AC:1.83A DC:1.00A");
-  display.display();
-  Serial.println("ALL 4 LOADS ACTIVE");
-  delay(2500);
+  digitalWrite(relayPin, LOW);  // สั่ง Relay หยุดทำงาน (หน้าสัมผัส COM -> NC)
+  Serial.println("Relay: OFF -> หลอดไฟ 12VAC ดับ");
+  delay(2000);                  // หน่วงเวลา 2 วินาที
 }</textarea>
       </div>
 
+      <!-- Serial Monitor & System Console -->
       <div class="h-44 bg-slate-950 border-t border-slate-800 flex flex-col">
         <div class="px-3 py-1.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
           <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
@@ -800,7 +574,7 @@ void loop() {
           <button id="btnClearConsole" class="text-[11px] text-slate-400 hover:text-white transition">ล้างข้อความ</button>
         </div>
         <div id="serialConsole" class="flex-1 p-2.5 code-font text-xs text-slate-300 overflow-y-auto space-y-1">
-          <div class="text-slate-500">[Serial] Ready</div>
+          <div class="text-slate-500">[ระบบ] พร้อมใช้งาน: ลากสายไฟหรือกด "ต่อวงจรอัตโนมัติ" แล้วกดปุ่ม "อัปโหลด &amp; รัน"</div>
         </div>
       </div>
 
@@ -810,175 +584,109 @@ void loop() {
   <script>
     /**
      * ============================================================================
-     * 1. ALL HARDWARE PINS DEFINITION (1540x940 Clean Hardware SVG Canvas)
+     * 1. HARDWARE PINS & COORDINATES DEFINITION (พิกัดจริงบน SVG Canvas 1060x640)
      * ============================================================================
      */
     const ALL_PINS = [
-      // OLED 0.96" I2C (x=36, y=36)
-      { id: 'OLED_VCC', component: 'OLED', name: 'OLED VCC', x: 36 + 55,  y: 36 + 103, color: '#f87171', type: 'header' },
-      { id: 'OLED_GND', component: 'OLED', name: 'OLED GND', x: 36 + 90,  y: 36 + 103, color: '#94a3b8', type: 'header' },
-      { id: 'OLED_SCL', component: 'OLED', name: 'OLED SCL', x: 36 + 125, y: 36 + 103, color: '#fde047', type: 'header' },
-      { id: 'OLED_SDA', component: 'OLED', name: 'OLED SDA', x: 36 + 160, y: 36 + 103, color: '#86efac', type: 'header' },
+      // --- Arduino Uno R3 Top Header (Board offset: x=55, y=195) ---
+      { id: 'UNO_D13', component: 'Arduino', name: 'D13', x: 55 + 96,  y: 195 + 24, color: '#fde047', labelPos: 'bottom' },
+      { id: 'UNO_D12', component: 'Arduino', name: 'D12', x: 55 + 112, y: 195 + 24, color: '#fde047', labelPos: 'bottom' },
+      { id: 'UNO_D11', component: 'Arduino', name: 'D11', x: 55 + 128, y: 195 + 24, color: '#fde047', labelPos: 'bottom' },
+      { id: 'UNO_D10', component: 'Arduino', name: 'D10', x: 55 + 144, y: 195 + 24, color: '#fde047', labelPos: 'bottom' },
+      { id: 'UNO_D9',  component: 'Arduino', name: 'D9',  x: 55 + 160, y: 195 + 24, color: '#fde047', labelPos: 'bottom' },
+      { id: 'UNO_D8',  component: 'Arduino', name: 'D8',  x: 55 + 176, y: 195 + 24, color: '#fde047', labelPos: 'bottom' },
+      { id: 'UNO_D7',  component: 'Arduino', name: 'D7',  x: 55 + 204, y: 195 + 24, color: '#e2e8f0', labelPos: 'bottom' },
+      { id: 'UNO_D6',  component: 'Arduino', name: 'D6',  x: 55 + 220, y: 195 + 24, color: '#e2e8f0', labelPos: 'bottom' },
+      { id: 'UNO_D5',  component: 'Arduino', name: 'D5',  x: 55 + 236, y: 195 + 24, color: '#e2e8f0', labelPos: 'bottom' },
+      { id: 'UNO_D4',  component: 'Arduino', name: 'D4',  x: 55 + 252, y: 195 + 24, color: '#e2e8f0', labelPos: 'bottom' },
+      { id: 'UNO_D3',  component: 'Arduino', name: 'D3',  x: 55 + 268, y: 195 + 24, color: '#e2e8f0', labelPos: 'bottom' },
+      { id: 'UNO_D2',  component: 'Arduino', name: 'D2',  x: 55 + 284, y: 195 + 24, color: '#e2e8f0', labelPos: 'bottom' },
+      { id: 'UNO_GND_TOP', component: 'Arduino', name: 'GND', x: 55 + 300, y: 195 + 24, color: '#60a5fa', labelPos: 'bottom' },
 
-      // Arduino Uno R3 Top Header (x=32, y=224)
-      { id: 'UNO_D13', component: 'Arduino', name: 'D13', x: 32 + 92,  y: 224 + 24, color: '#fde047', labelPos: 'bottom' },
-      { id: 'UNO_D12', component: 'Arduino', name: 'D12', x: 32 + 108, y: 224 + 24, color: '#fde047', labelPos: 'bottom' },
-      { id: 'UNO_D11', component: 'Arduino', name: 'D11', x: 32 + 124, y: 224 + 24, color: '#fde047', labelPos: 'bottom' },
-      { id: 'UNO_D10', component: 'Arduino', name: 'D10', x: 32 + 140, y: 224 + 24, color: '#fde047', labelPos: 'bottom' },
-      { id: 'UNO_D9',  component: 'Arduino', name: 'D9',  x: 32 + 156, y: 224 + 24, color: '#fde047', labelPos: 'bottom' },
-      { id: 'UNO_D8',  component: 'Arduino', name: 'D8',  x: 32 + 172, y: 224 + 24, color: '#fde047', labelPos: 'bottom' },
-      { id: 'UNO_D7',  component: 'Arduino', name: 'D7',  x: 32 + 200, y: 224 + 24, color: '#e2e8f0', labelPos: 'bottom' },
-      { id: 'UNO_D6',  component: 'Arduino', name: 'D6',  x: 32 + 216, y: 224 + 24, color: '#e2e8f0', labelPos: 'bottom' },
-      { id: 'UNO_D5',  component: 'Arduino', name: 'D5',  x: 32 + 232, y: 224 + 24, color: '#e2e8f0', labelPos: 'bottom' },
-      { id: 'UNO_D4',  component: 'Arduino', name: 'D4',  x: 32 + 248, y: 224 + 24, color: '#e2e8f0', labelPos: 'bottom' },
-      { id: 'UNO_D3',  component: 'Arduino', name: 'D3',  x: 32 + 264, y: 224 + 24, color: '#e2e8f0', labelPos: 'bottom' },
-      { id: 'UNO_D2',  component: 'Arduino', name: 'D2',  x: 32 + 280, y: 224 + 24, color: '#e2e8f0', labelPos: 'bottom' },
-      { id: 'UNO_GND_TOP', component: 'Arduino', name: 'GND', x: 32 + 296, y: 224 + 24, color: '#60a5fa', labelPos: 'bottom' },
+      // --- Arduino Uno R3 Bottom Header (Power & Analog) ---
+      { id: 'UNO_5V',   component: 'Arduino', name: '5V',  x: 55 + 138, y: 195 + 216, color: '#f87171', labelPos: 'top' },
+      { id: 'UNO_GND1', component: 'Arduino', name: 'GND', x: 55 + 154, y: 195 + 216, color: '#60a5fa', labelPos: 'top' },
+      { id: 'UNO_GND2', component: 'Arduino', name: 'GND', x: 55 + 170, y: 195 + 216, color: '#60a5fa', labelPos: 'top' },
+      { id: 'UNO_A0',   component: 'Arduino', name: 'A0',  x: 55 + 214, y: 195 + 216, color: '#86efac', labelPos: 'top' },
+      { id: 'UNO_A1',   component: 'Arduino', name: 'A1',  x: 55 + 230, y: 195 + 216, color: '#86efac', labelPos: 'top' },
+      { id: 'UNO_A2',   component: 'Arduino', name: 'A2',  x: 55 + 246, y: 195 + 216, color: '#86efac', labelPos: 'top' },
+      { id: 'UNO_A3',   component: 'Arduino', name: 'A3',  x: 55 + 262, y: 195 + 216, color: '#86efac', labelPos: 'top' },
+      { id: 'UNO_A4',   component: 'Arduino', name: 'A4',  x: 55 + 278, y: 195 + 216, color: '#86efac', labelPos: 'top' },
+      { id: 'UNO_A5',   component: 'Arduino', name: 'A5',  x: 55 + 294, y: 195 + 216, color: '#86efac', labelPos: 'top' },
 
-      // Arduino Uno R3 Bottom Header
-      { id: 'UNO_5V',   component: 'Arduino', name: '5V',  x: 32 + 132, y: 224 + 220, color: '#f87171', labelPos: 'top' },
-      { id: 'UNO_GND1', component: 'Arduino', name: 'GND', x: 32 + 148, y: 224 + 220, color: '#60a5fa', labelPos: 'top' },
-      { id: 'UNO_GND2', component: 'Arduino', name: 'GND', x: 32 + 164, y: 224 + 220, color: '#60a5fa', labelPos: 'top' },
-      { id: 'UNO_A0',   component: 'Arduino', name: 'A0',  x: 32 + 206, y: 224 + 220, color: '#86efac', labelPos: 'top' },
-      { id: 'UNO_A1',   component: 'Arduino', name: 'A1',  x: 32 + 222, y: 224 + 220, color: '#86efac', labelPos: 'top' },
-      { id: 'UNO_A2',   component: 'Arduino', name: 'A2',  x: 32 + 238, y: 224 + 220, color: '#86efac', labelPos: 'top' },
-      { id: 'UNO_A3',   component: 'Arduino', name: 'A3',  x: 32 + 254, y: 224 + 220, color: '#86efac', labelPos: 'top' },
-      { id: 'UNO_A4',   component: 'Arduino', name: 'A4',  x: 32 + 270, y: 224 + 220, color: '#86efac', labelPos: 'top' },
-      { id: 'UNO_A5',   component: 'Arduino', name: 'A5',  x: 32 + 286, y: 224 + 220, color: '#86efac', labelPos: 'top' },
+      // --- Relay Module Control Pins (Board offset: x=510, y=62) ---
+      { id: 'RELAY_VCC', component: 'Relay', name: 'VCC (5V)', x: 510 + 23, y: 62 + 48,  color: '#f87171', type: 'header' },
+      { id: 'RELAY_GND', component: 'Relay', name: 'GND',      x: 510 + 23, y: 62 + 75,  color: '#94a3b8', type: 'header' },
+      { id: 'RELAY_IN',  component: 'Relay', name: 'IN',       x: 510 + 23, y: 62 + 102, color: '#facc15', type: 'header' },
 
-      // 5V / GND Power Distribution Rail (x=32, y=540)
-      { id: 'BUS_5V_1',  component: '5V Rail', name: '+5V #1',  x: 32 + 75,  y: 540 + 43, color: '#f87171', type: 'header' },
-      { id: 'BUS_5V_2',  component: '5V Rail', name: '+5V #2',  x: 32 + 125, y: 540 + 43, color: '#f87171', type: 'header' },
-      { id: 'BUS_5V_3',  component: '5V Rail', name: '+5V #3',  x: 32 + 175, y: 540 + 43, color: '#f87171', type: 'header' },
-      { id: 'BUS_5V_4',  component: '5V Rail', name: '+5V #4',  x: 32 + 225, y: 540 + 43, color: '#f87171', type: 'header' },
-      { id: 'BUS_5V_5',  component: '5V Rail', name: '+5V #5',  x: 32 + 275, y: 540 + 43, color: '#f87171', type: 'header' },
-      { id: 'BUS_GND_1', component: '5V Rail', name: 'GND #1', x: 32 + 75,  y: 540 + 81, color: '#60a5fa', type: 'header' },
-      { id: 'BUS_GND_2', component: '5V Rail', name: 'GND #2', x: 32 + 125, y: 540 + 81, color: '#60a5fa', type: 'header' },
-      { id: 'BUS_GND_3', component: '5V Rail', name: 'GND #3', x: 32 + 175, y: 540 + 81, color: '#60a5fa', type: 'header' },
-      { id: 'BUS_GND_4', component: '5V Rail', name: 'GND #4', x: 32 + 225, y: 540 + 81, color: '#60a5fa', type: 'header' },
-      { id: 'BUS_GND_5', component: '5V Rail', name: 'GND #5', x: 32 + 275, y: 540 + 81, color: '#60a5fa', type: 'header' },
+      // --- Relay Module Screw Terminals (NO, COM, NC) ---
+      { id: 'RELAY_NO',  component: 'Relay', name: 'NO',  x: 510 + 219, y: 62 + 42,  color: '#cbd5e1', type: 'screw' },
+      { id: 'RELAY_COM', component: 'Relay', name: 'COM', x: 510 + 219, y: 62 + 75,  color: '#fde047', type: 'screw' },
+      { id: 'RELAY_NC',  component: 'Relay', name: 'NC',  x: 510 + 219, y: 62 + 108, color: '#cbd5e1', type: 'screw' },
 
-      // RELAY #1: 1-Channel (x=416, y=36)
-      { id: 'R1_VCC', component: 'Relay 1-Ch', name: 'R1 VCC', x: 416 + 24,  y: 36 + 50,  color: '#f87171', type: 'header' },
-      { id: 'R1_GND', component: 'Relay 1-Ch', name: 'R1 GND', x: 416 + 24,  y: 36 + 76,  color: '#94a3b8', type: 'header' },
-      { id: 'R1_IN1', component: 'Relay 1-Ch', name: 'R1 IN1', x: 416 + 24,  y: 36 + 102, color: '#facc15', type: 'header' },
-      { id: 'R1_NO',  component: 'Relay 1-Ch', name: 'R1 NO',  x: 416 + 427, y: 36 + 54,  color: '#86efac', type: 'screw' },
-      { id: 'R1_COM', component: 'Relay 1-Ch', name: 'R1 COM', x: 416 + 427, y: 36 + 86,  color: '#fde047', type: 'screw' },
-      { id: 'R1_NC',  component: 'Relay 1-Ch', name: 'R1 NC',  x: 416 + 427, y: 36 + 118, color: '#cbd5e1', type: 'screw' },
+      // --- 220VAC Input & 12VAC Transformer Output (Unit offset: x=490, y=365) ---
+      { id: 'AC220_L', component: '220VAC', name: '220V L', x: 490 + 48, y: 365 + 98, color: '#f87171', type: 'screw' },
+      { id: 'AC220_N', component: '220VAC', name: '220V N', x: 490 + 82, y: 365 + 98, color: '#60a5fa', type: 'screw' },
 
-      // RELAY #2: 2-Channel (x=416, y=218)
-      { id: 'R2_VCC',     component: 'Relay 2-Ch', name: 'R2 VCC',  x: 416 + 24,  y: 218 + 50,  color: '#f87171', type: 'header' },
-      { id: 'R2_GND',     component: 'Relay 2-Ch', name: 'R2 GND',  x: 416 + 24,  y: 218 + 76,  color: '#94a3b8', type: 'header' },
-      { id: 'R2_IN1',     component: 'Relay 2-Ch', name: 'R2 IN1',  x: 416 + 24,  y: 218 + 102, color: '#facc15', type: 'header' },
-      { id: 'R2_IN2',     component: 'Relay 2-Ch', name: 'R2 IN2',  x: 416 + 24,  y: 218 + 128, color: '#c084fc', type: 'header' },
-      { id: 'R2_CH1_NO',  component: 'Relay 2-Ch', name: 'R2 CH1 NO',  x: 416 + 427, y: 218 + 50,  color: '#86efac', type: 'screw' },
-      { id: 'R2_CH1_COM', component: 'Relay 2-Ch', name: 'R2 CH1 COM', x: 416 + 427, y: 218 + 78,  color: '#fde047', type: 'screw' },
-      { id: 'R2_CH2_NO',  component: 'Relay 2-Ch', name: 'R2 CH2 NO',  x: 416 + 427, y: 218 + 109, color: '#86efac', type: 'screw' },
-      { id: 'R2_CH2_COM', component: 'Relay 2-Ch', name: 'R2 CH2 COM', x: 416 + 427, y: 218 + 137, color: '#fde047', type: 'screw' },
+      { id: 'AC12_1', component: '12VAC', name: '12VAC (AC1)', x: 490 + 271, y: 365 + 114, color: '#fde047', type: 'screw' },
+      { id: 'AC12_2', component: '12VAC', name: '12VAC (AC2)', x: 490 + 271, y: 365 + 172, color: '#fde047', type: 'screw' },
 
-      // RELAY #3: 4-Channel Isolation (x=416, y=414)
-      { id: 'R4_VCC',     component: 'Relay 4-Ch', name: 'R4 VCC',  x: 416 + 24,  y: 414 + 50,  color: '#f87171', type: 'header' },
-      { id: 'R4_GND',     component: 'Relay 4-Ch', name: 'R4 GND',  x: 416 + 24,  y: 414 + 74,  color: '#94a3b8', type: 'header' },
-      { id: 'R4_IN1',     component: 'Relay 4-Ch', name: 'R4 IN1',  x: 416 + 24,  y: 414 + 98,  color: '#facc15', type: 'header' },
-      { id: 'R4_IN2',     component: 'Relay 4-Ch', name: 'R4 IN2',  x: 416 + 24,  y: 414 + 122, color: '#c084fc', type: 'header' },
-      { id: 'R4_IN3',     component: 'Relay 4-Ch', name: 'R4 IN3',  x: 416 + 24,  y: 414 + 146, color: '#38bdf8', type: 'header' },
-      { id: 'R4_IN4',     component: 'Relay 4-Ch', name: 'R4 IN4',  x: 416 + 24,  y: 414 + 170, color: '#86efac', type: 'header' },
-      { id: 'R4_CH1_NO',  component: 'Relay 4-Ch', name: 'R4 CH1 NO',  x: 416 + 427, y: 414 + 49,  color: '#86efac', type: 'screw' },
-      { id: 'R4_CH1_COM', component: 'Relay 4-Ch', name: 'R4 CH1 COM', x: 416 + 427, y: 414 + 69,  color: '#fde047', type: 'screw' },
-      { id: 'R4_CH2_NO',  component: 'Relay 4-Ch', name: 'R4 CH2 NO',  x: 416 + 427, y: 414 + 89,  color: '#86efac', type: 'screw' },
-      { id: 'R4_CH2_COM', component: 'Relay 4-Ch', name: 'R4 CH2 COM', x: 416 + 427, y: 414 + 109, color: '#fde047', type: 'screw' },
-      { id: 'R4_CH3_NO',  component: 'Relay 4-Ch', name: 'R4 CH3 NO',  x: 416 + 427, y: 414 + 129, color: '#86efac', type: 'screw' },
-      { id: 'R4_CH3_COM', component: 'Relay 4-Ch', name: 'R4 CH3 COM', x: 416 + 427, y: 414 + 149, color: '#fde047', type: 'screw' },
-      { id: 'R4_CH4_NO',  component: 'Relay 4-Ch', name: 'R4 CH4 NO',  x: 416 + 427, y: 414 + 169, color: '#86efac', type: 'screw' },
-      { id: 'R4_CH4_COM', component: 'Relay 4-Ch', name: 'R4 CH4 COM', x: 416 + 427, y: 414 + 189, color: '#fde047', type: 'screw' },
-
-      // RELAY #4: Shield Active LOW (x=416, y=656)
-      { id: 'RS_VCC',     component: 'Relay Shield', name: 'Shield 5V',   x: 416 + 24,  y: 656 + 54,  color: '#f87171', type: 'header' },
-      { id: 'RS_GND',     component: 'Relay Shield', name: 'Shield GND',  x: 416 + 24,  y: 656 + 79,  color: '#94a3b8', type: 'header' },
-      { id: 'RS_IN1',     component: 'Relay Shield', name: 'Shield IN1',  x: 416 + 24,  y: 656 + 104, color: '#fde047', type: 'header' },
-      { id: 'RS_IN2',     component: 'Relay Shield', name: 'Shield IN2',  x: 416 + 24,  y: 656 + 129, color: '#c084fc', type: 'header' },
-      { id: 'RS_IN3',     component: 'Relay Shield', name: 'Shield IN3',  x: 416 + 24,  y: 656 + 154, color: '#38bdf8', type: 'header' },
-      { id: 'RS_IN4',     component: 'Relay Shield', name: 'Shield IN4',  x: 416 + 24,  y: 656 + 179, color: '#86efac', type: 'header' },
-      { id: 'RS_CH1_NO',  component: 'Relay Shield', name: 'Shield R1 NO',  x: 416 + 427, y: 656 + 55,  color: '#86efac', type: 'screw' },
-      { id: 'RS_CH1_COM', component: 'Relay Shield', name: 'Shield R1 COM', x: 416 + 427, y: 656 + 77,  color: '#fde047', type: 'screw' },
-      { id: 'RS_CH2_NO',  component: 'Relay Shield', name: 'Shield R2 NO',  x: 416 + 427, y: 656 + 99,  color: '#86efac', type: 'screw' },
-      { id: 'RS_CH2_COM', component: 'Relay Shield', name: 'Shield R2 COM', x: 416 + 427, y: 656 + 121, color: '#fde047', type: 'screw' },
-      { id: 'RS_CH3_NO',  component: 'Relay Shield', name: 'Shield R3 NO',  x: 416 + 427, y: 656 + 143, color: '#86efac', type: 'screw' },
-      { id: 'RS_CH3_COM', component: 'Relay Shield', name: 'Shield R3 COM', x: 416 + 427, y: 656 + 165, color: '#fde047', type: 'screw' },
-      { id: 'RS_CH4_NO',  component: 'Relay Shield', name: 'Shield R4 NO',  x: 416 + 427, y: 656 + 187, color: '#86efac', type: 'screw' },
-      { id: 'RS_CH4_COM', component: 'Relay Shield', name: 'Shield R4 COM', x: 416 + 427, y: 656 + 207, color: '#fde047', type: 'screw' },
-
-      // 12VAC System (base x=918, y=36)
-      { id: 'AC12_1',   component: '12VAC',      name: '12VAC AC1', x: 932 + 62,  y: 74 + 305, color: '#fde047', type: 'screw' },
-      { id: 'AC12_2',   component: '12VAC',      name: '12VAC AC2', x: 932 + 142, y: 74 + 305, color: '#60a5fa', type: 'screw' },
-      { id: 'AC_LAMP1', component: 'Lamp 12VAC', name: 'Lamp L1',   x: 1148 + 52, y: 74 + 305, color: '#fde047', type: 'screw' },
-      { id: 'AC_LAMP2', component: 'Lamp 12VAC', name: 'Lamp L2',   x: 1148 + 118,y: 74 + 305, color: '#60a5fa', type: 'screw' },
-      { id: 'AC_FAN1',  component: 'Fan 12VAC',  name: 'Fan F1',    x: 1330 + 52, y: 74 + 305, color: '#38bdf8', type: 'screw' },
-      { id: 'AC_FAN2',  component: 'Fan 12VAC',  name: 'Fan F2',    x: 1330 + 118,y: 74 + 305, color: '#60a5fa', type: 'screw' },
-
-      // 12VDC Battery System (base x=918, y=480)
-      { id: 'DC12_POS', component: '12VDC',     name: '+12VDC',   x: 932 + 62,  y: 518 + 310, color: '#f87171', type: 'screw' },
-      { id: 'DC12_NEG', component: '12VDC',     name: 'GND (-)',  x: 932 + 142, y: 518 + 310, color: '#94a3b8', type: 'screw' },
-      { id: 'DC_LED1',  component: 'LED 12VDC', name: 'LED +',    x: 1148 + 52, y: 518 + 310, color: '#f87171', type: 'screw' },
-      { id: 'DC_LED2',  component: 'LED 12VDC', name: 'LED -',    x: 1148 + 118,y: 518 + 310, color: '#94a3b8', type: 'screw' },
-      { id: 'DC_FAN1',  component: 'Fan 12VDC', name: 'Fan +12V', x: 1330 + 52, y: 518 + 310, color: '#f87171', type: 'screw' },
-      { id: 'DC_FAN2',  component: 'Fan 12VDC', name: 'Fan GND',  x: 1330 + 118,y: 518 + 310, color: '#94a3b8', type: 'screw' }
+      // --- 12VAC Lamp Terminals (Lamp offset: x=845, y=195) ---
+      { id: 'LAMP_1', component: 'Lamp', name: 'หลอดไฟ ขั้ว 1', x: 845 + 58,  y: 195 + 270, color: '#fde047', type: 'screw' },
+      { id: 'LAMP_2', component: 'Lamp', name: 'หลอดไฟ ขั้ว 2', x: 845 + 122, y: 195 + 270, color: '#fde047', type: 'screw' }
     ];
 
     /**
      * ============================================================================
-     * 2. APPLICATION STATE & RELAY CLICK SOUND
+     * 2. APPLICATION STATE & AUDIO SYNTHESIZER (Relay Mechanical Click Sound)
      * ============================================================================
      */
     const state = {
-      wires: [],
-      selectedPinId: null,
-      draftPoints: [],
-      draggingWaypoint: null,
+      wires: [],                 // { id, from, to, color }
+      selectedPinId: null,       // Currently active starting pin for wiring
       currentWireColor: '#ef4444',
-      acBreakerOn: false,
-      dcBatteryOn: false,
-      isRunning: false,
+      breakerOn: false,          // 220VAC Main Breaker switch
+      isRunning: false,          // C++ Code execution state
       runLoopTimer: null,
-      pinModes: {},
-      digitalStates: {},
-      oledPowered: false,
-      oledLines: ['OLED 0.96" I2C', 'AC: OFF | DC: OFF', 'READY'],
-      prevAnyRelayOn: false,
-      acLampOn: false,
-      acFanOn: false,
-      dcLedOn: false,
-      dcFanOn: false
+      pinModes: {},              // e.g. { 7: 'OUTPUT' }
+      digitalStates: {},         // e.g. { 7: 1 (HIGH) or 0 (LOW) }
+      relayEnergized: false,     // Physical coil state of Relay
+      bulbLit: false             // Physical state of 12VAC Bulb
     };
 
+    // Web Audio API for realistic Relay Click sound (no external audio files needed)
     let audioCtx = null;
     function playRelayClick(energized) {
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
+
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(energized ? 1400 : 950, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.025);
-        gain.gain.setValueAtTime(0.16, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.028);
+
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.03);
-      } catch (e) {}
+      } catch (e) {
+        // Ignore audio block if user hasn't interacted yet
+      }
     }
 
     /**
      * ============================================================================
-     * 3. RENDER PINS, WIRES, & WAYPOINTS
+     * 3. RENDER PINS & INTERACTIVE WIRING ENGINE
      * ============================================================================
      */
     const svgCanvas = document.getElementById('circuitCanvas');
     const pinsLayer = document.getElementById('pinsLayer');
     const wiresLayer = document.getElementById('wiresLayer');
-    const waypointsLayer = document.getElementById('waypointsLayer');
     const previewWire = document.getElementById('previewWire');
 
     function getPinById(id) {
@@ -993,39 +701,42 @@ void loop() {
         g.setAttribute('data-pin-id', pin.id);
 
         if (pin.type === 'screw') {
+          // Realistic Brass/Steel Screw Terminal Socket
           const outer = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
           outer.setAttribute('cx', pin.x);
           outer.setAttribute('cy', pin.y);
-          outer.setAttribute('r', '7.5');
+          outer.setAttribute('r', '8.5');
           outer.setAttribute('fill', '#cbd5e1');
           outer.setAttribute('stroke', '#475569');
-          outer.setAttribute('stroke-width', '1.6');
+          outer.setAttribute('stroke-width', '1.8');
 
           const slot = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          slot.setAttribute('x1', pin.x - 4.5);
-          slot.setAttribute('y1', pin.y - 2.5);
-          slot.setAttribute('x2', pin.x + 4.5);
-          slot.setAttribute('y2', pin.y + 2.5);
+          slot.setAttribute('x1', pin.x - 5);
+          slot.setAttribute('y1', pin.y - 3);
+          slot.setAttribute('x2', pin.x + 5);
+          slot.setAttribute('y2', pin.y + 3);
           slot.setAttribute('stroke', '#334155');
-          slot.setAttribute('stroke-width', '1.8');
+          slot.setAttribute('stroke-width', '2');
 
           g.appendChild(outer);
           g.appendChild(slot);
         } else {
+          // Arduino / Relay Female or Male Pin Socket
           const hole = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
           hole.setAttribute('cx', pin.x);
           hole.setAttribute('cy', pin.y);
-          hole.setAttribute('r', '4.3');
+          hole.setAttribute('r', '4.6');
           hole.setAttribute('fill', pin.color);
           hole.setAttribute('stroke', '#64748b');
-          hole.setAttribute('stroke-width', '1.2');
+          hole.setAttribute('stroke-width', '1.3');
           g.appendChild(hole);
 
+          // Silkscreen Label on Arduino Board
           if (pin.component === 'Arduino' && pin.labelPos) {
             const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             lbl.setAttribute('x', pin.x);
-            lbl.setAttribute('y', pin.labelPos === 'bottom' ? pin.y + 17 : pin.y - 11);
-            lbl.setAttribute('font-size', '7');
+            lbl.setAttribute('y', pin.labelPos === 'bottom' ? pin.y + 18 : pin.y - 12);
+            lbl.setAttribute('font-size', '7.2');
             lbl.setAttribute('font-weight', 'bold');
             lbl.setAttribute('fill', '#ffffff');
             lbl.setAttribute('text-anchor', 'middle');
@@ -1034,16 +745,17 @@ void loop() {
           }
         }
 
+        // Invisible larger hit target for easy clicking & touch
         const hit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         hit.setAttribute('class', 'pin-hit');
         hit.setAttribute('cx', pin.x);
         hit.setAttribute('cy', pin.y);
-        hit.setAttribute('r', '9');
+        hit.setAttribute('r', '10');
         hit.setAttribute('fill', 'transparent');
         g.appendChild(hit);
 
         const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = `${pin.component}: ${pin.name}`;
+        title.textContent = `${pin.component}: ${pin.name} (คลิกเพื่อต่อสายไฟ)`;
         g.appendChild(title);
 
         g.addEventListener('click', (e) => {
@@ -1055,68 +767,38 @@ void loop() {
       });
     }
 
-    function buildPolylineOrCurvePath(start, points = [], end) {
-      const pts = [start, ...(points || []), end];
-      if (pts.length === 2) {
-        const [p1, p2] = pts;
-        const dx = Math.abs(p2.x - p1.x);
-        const dy = Math.abs(p2.y - p1.y);
-        const sag = Math.min(60, Math.max(18, (dx + dy) * 0.14));
-        const cx1 = p1.x;
-        const cy1 = p1.y + (p1.y < 250 ? -sag * 0.4 : sag * 0.55);
-        const cx2 = p2.x;
-        const cy2 = p2.y + (p2.y < 250 ? -sag * 0.4 : sag * 0.55);
-        return `M ${p1.x} ${p1.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${p2.x} ${p2.y}`;
-      }
-
-      let d = `M ${pts[0].x} ${pts[0].y}`;
-      const cornerRadius = 7;
-      for (let i = 1; i < pts.length - 1; i++) {
-        const prev = pts[i - 1];
-        const curr = pts[i];
-        const next = pts[i + 1];
-
-        const v1x = prev.x - curr.x;
-        const v1y = prev.y - curr.y;
-        const len1 = Math.hypot(v1x, v1y) || 1;
-
-        const v2x = next.x - curr.x;
-        const v2y = next.y - curr.y;
-        const len2 = Math.hypot(v2x, v2y) || 1;
-
-        const r = Math.min(cornerRadius, len1 * 0.4, len2 * 0.4);
-        const pStartX = curr.x + (v1x / len1) * r;
-        const pStartY = curr.y + (v1y / len1) * r;
-        const pEndX = curr.x + (v2x / len2) * r;
-        const pEndY = curr.y + (v2y / len2) * r;
-
-        d += ` L ${pStartX.toFixed(1)} ${pStartY.toFixed(1)} Q ${curr.x} ${curr.y}, ${pEndX.toFixed(1)} ${pEndY.toFixed(1)}`;
-      }
-      const last = pts[pts.length - 1];
-      d += ` L ${last.x} ${last.y}`;
-      return d;
+    function calculateWirePath(x1, y1, x2, y2) {
+      const dx = Math.abs(x2 - x1);
+      const dy = Math.abs(y2 - y1);
+      const sag = Math.min(85, Math.max(25, (dx + dy) * 0.22));
+      const cx1 = x1;
+      const cy1 = y1 + (y1 < 250 ? -sag * 0.5 : sag * 0.7);
+      const cx2 = x2;
+      const cy2 = y2 + (y2 < 250 ? -sag * 0.5 : sag * 0.7);
+      return `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
     }
 
     function handlePinClick(pinId) {
       if (!state.selectedPinId) {
+        // Start drawing a wire
         state.selectedPinId = pinId;
-        state.draftPoints = [];
         updatePinSelectionVisuals();
         const p = getPinById(pinId);
         previewWire.setAttribute('stroke', state.currentWireColor);
         previewWire.setAttribute('d', `M ${p.x} ${p.y} L ${p.x} ${p.y}`);
         previewWire.setAttribute('opacity', '0.85');
       } else if (state.selectedPinId === pinId) {
+        // Cancel selection if clicking same pin
         cancelWiring();
       } else {
-        addWire(state.selectedPinId, pinId, state.currentWireColor, [...state.draftPoints]);
+        // Complete connection between two pins
+        addWire(state.selectedPinId, pinId, state.currentWireColor);
         cancelWiring();
       }
     }
 
     function cancelWiring() {
       state.selectedPinId = null;
-      state.draftPoints = [];
       previewWire.setAttribute('opacity', '0');
       updatePinSelectionVisuals();
     }
@@ -1131,6 +813,7 @@ void loop() {
       });
     }
 
+    // Track mouse/touch position in SVG coordinates for live Bezier wire preview
     function getSvgPoint(clientX, clientY) {
       const pt = svgCanvas.createSVGPoint();
       pt.x = clientX;
@@ -1138,62 +821,32 @@ void loop() {
       return pt.matrixTransform(svgCanvas.getScreenCTM().inverse());
     }
 
-    svgCanvas.addEventListener('click', (e) => {
-      if (state.draggingWaypoint) {
-        state.draggingWaypoint = null;
-        return;
-      }
-      if (!state.selectedPinId) return;
-      const pt = getSvgPoint(e.clientX, e.clientY);
-      state.draftPoints.push({ x: Math.round(pt.x), y: Math.round(pt.y) });
-      const p1 = getPinById(state.selectedPinId);
-      previewWire.setAttribute('d', buildPolylineOrCurvePath(p1, state.draftPoints, pt));
-    });
-
-    svgCanvas.addEventListener('contextmenu', (e) => {
-      if (state.selectedPinId) {
-        e.preventDefault();
-        cancelWiring();
-      }
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && state.selectedPinId) cancelWiring();
-    });
-
     svgCanvas.addEventListener('mousemove', (e) => {
-      const cursor = getSvgPoint(e.clientX, e.clientY);
-      if (state.draggingWaypoint) {
-        const wire = state.wires.find(w => w.id === state.draggingWaypoint.wireId);
-        if (wire && wire.points[state.draggingWaypoint.pointIndex]) {
-          wire.points[state.draggingWaypoint.pointIndex] = {
-            x: Math.round(cursor.x),
-            y: Math.round(cursor.y)
-          };
-          renderWires();
-        }
-        return;
-      }
       if (!state.selectedPinId) return;
       const p1 = getPinById(state.selectedPinId);
-      previewWire.setAttribute('d', buildPolylineOrCurvePath(p1, state.draftPoints, cursor));
+      const cursor = getSvgPoint(e.clientX, e.clientY);
+      previewWire.setAttribute('d', calculateWirePath(p1.x, p1.y, cursor.x, cursor.y));
     });
 
-    window.addEventListener('mouseup', () => {
-      state.draggingWaypoint = null;
+    svgCanvas.addEventListener('click', () => {
+      if (state.selectedPinId) cancelWiring();
     });
 
-    function addWire(fromId, toId, color, points = []) {
+    function addWire(fromId, toId, color) {
+      // Prevent duplicate exact wire
       const exists = state.wires.some(
         w => (w.from === fromId && w.to === toId) || (w.from === toId && w.to === fromId)
       );
-      if (exists) return;
+      if (exists) {
+        logConsole('[แจ้งเตือน] จุดเชื่อมต่อนี้มีสายไฟอยู่แล้ว', 'text-amber-400');
+        return;
+      }
+
       state.wires.push({
         id: 'wire_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
         from: fromId,
         to: toId,
-        color: color,
-        points: points
+        color: color
       });
       renderWires();
       evaluateCircuitPhysics();
@@ -1207,7 +860,6 @@ void loop() {
 
     function renderWires() {
       wiresLayer.innerHTML = '';
-      waypointsLayer.innerHTML = '';
       document.getElementById('wireCount').textContent = state.wires.length;
 
       state.wires.forEach(wire => {
@@ -1215,19 +867,20 @@ void loop() {
         const p2 = getPinById(wire.to);
         if (!p1 || !p2) return;
 
-        const d = buildPolylineOrCurvePath(p1, wire.points || [], p2);
+        const d = calculateWirePath(p1.x, p1.y, p2.x, p2.y);
+
+        // Outer Wire Insulation
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', d);
         path.setAttribute('fill', 'none');
         path.setAttribute('stroke', wire.color);
-        path.setAttribute('stroke-width', '3.8');
+        path.setAttribute('stroke-width', '4.5');
         path.setAttribute('stroke-linecap', 'round');
-        path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('class', 'wire-path');
         path.setAttribute('data-wire-id', wire.id);
 
         const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = `${p1.name} ⇄ ${p2.name}`;
+        title.textContent = `${p1.name} ⇄ ${p2.name} (คลิกเพื่อลบสายไฟเส้นนี้)`;
         path.appendChild(title);
 
         path.addEventListener('click', (e) => {
@@ -1235,34 +888,11 @@ void loop() {
           removeWire(wire.id);
         });
 
-        (wire.points || []).forEach((pt, idx) => {
-          const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          handle.setAttribute('cx', pt.x);
-          handle.setAttribute('cy', pt.y);
-          handle.setAttribute('r', '4.2');
-          handle.setAttribute('fill', '#ffffff');
-          handle.setAttribute('stroke', wire.color);
-          handle.setAttribute('stroke-width', '2');
-          handle.setAttribute('class', 'waypoint-handle');
-
-          handle.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            state.draggingWaypoint = { wireId: wire.id, pointIndex: idx };
-          });
-          handle.addEventListener('click', (e) => e.stopPropagation());
-          handle.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            wire.points.splice(idx, 1);
-            renderWires();
-          });
-
-          waypointsLayer.appendChild(handle);
-        });
-
+        // Terminal End Caps
         const cap1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         cap1.setAttribute('cx', p1.x);
         cap1.setAttribute('cy', p1.y);
-        cap1.setAttribute('r', '3.5');
+        cap1.setAttribute('r', '4');
         cap1.setAttribute('fill', wire.color);
         cap1.setAttribute('stroke', '#ffffff');
         cap1.setAttribute('stroke-width', '1');
@@ -1271,7 +901,7 @@ void loop() {
         const cap2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         cap2.setAttribute('cx', p2.x);
         cap2.setAttribute('cy', p2.y);
-        cap2.setAttribute('r', '3.5');
+        cap2.setAttribute('r', '4');
         cap2.setAttribute('fill', wire.color);
         cap2.setAttribute('stroke', '#ffffff');
         cap2.setAttribute('stroke-width', '1');
@@ -1281,32 +911,14 @@ void loop() {
         wiresLayer.appendChild(cap1);
         wiresLayer.appendChild(cap2);
       });
-
-      applyWireFlowAnimations();
-    }
-
-    function applyWireFlowAnimations() {
-      const anyAcActive = state.acLampOn || state.acFanOn;
-      const anyDcActive = state.dcLedOn || state.dcFanOn;
-      document.querySelectorAll('.wire-path').forEach(el => {
-        const wId = el.getAttribute('data-wire-id');
-        const w = state.wires.find(item => item.id === wId);
-        if (!w) return;
-        el.classList.remove('wire-energized-ac', 'wire-energized-dc');
-        const pins = [w.from, w.to];
-        const isAc = pins.some(p => p.startsWith('AC12') || p.startsWith('AC_LAMP') || p.startsWith('AC_FAN'));
-        const isDc = pins.some(p => p.startsWith('DC12') || p.startsWith('DC_LED') || p.startsWith('DC_FAN'));
-        if (anyAcActive && isAc) el.classList.add('wire-energized-ac');
-        if (anyDcActive && isDc) el.classList.add('wire-energized-dc');
-      });
     }
 
     /**
      * ============================================================================
-     * 4. CIRCUIT GRAPH SOLVER
+     * 4. REALISTIC ELECTRICAL GRAPH SOLVER (ตรวจสอบความถูกต้องของวงจร DC & AC)
      * ============================================================================
      */
-    function buildBaseAdjacency() {
+    function buildAdjacencyMap() {
       const adj = {};
       ALL_PINS.forEach(p => { adj[p.id] = new Set(); });
       state.wires.forEach(w => {
@@ -1315,15 +927,6 @@ void loop() {
           adj[w.to].add(w.from);
         }
       });
-
-      const bus5v = ['BUS_5V_1', 'BUS_5V_2', 'BUS_5V_3', 'BUS_5V_4', 'BUS_5V_5'];
-      const busGnd = ['BUS_GND_1', 'BUS_GND_2', 'BUS_GND_3', 'BUS_GND_4', 'BUS_GND_5'];
-      for (let i = 0; i < bus5v.length - 1; i++) {
-        adj[bus5v[i]].add(bus5v[i + 1]);
-        adj[bus5v[i + 1]].add(bus5v[i]);
-        adj[busGnd[i]].add(busGnd[i + 1]);
-        adj[busGnd[i + 1]].add(busGnd[i]);
-      }
       return adj;
     }
 
@@ -1331,6 +934,7 @@ void loop() {
       const targets = Array.isArray(targetIds) ? targetIds : [targetIds];
       const visited = new Set([startId]);
       const queue = [startId];
+
       while (queue.length > 0) {
         const curr = queue.shift();
         if (targets.includes(curr)) return curr;
@@ -1344,49 +948,564 @@ void loop() {
       return null;
     }
 
-    function checkChannelEnergized(baseAdj, vccOk, gndOk, inPinId, isActiveLow) {
-      if (!state.isRunning || !vccOk || !gndOk) return false;
-      const digitalPinIds = ['UNO_D2','UNO_D3','UNO_D4','UNO_D5','UNO_D6','UNO_D7','UNO_D8','UNO_D9','UNO_D10','UNO_D11','UNO_D12','UNO_D13'];
-      const sigPinId = areConnected(baseAdj, inPinId, digitalPinIds);
-      if (!sigPinId) return false;
-      const pinNum = parseInt(sigPinId.replace('UNO_D', ''), 10);
-      if (state.pinModes[pinNum] !== 'OUTPUT') return false;
-      const val = state.digitalStates[pinNum] === 1 ? 'HIGH' : 'LOW';
-      return isActiveLow ? (val === 'LOW') : (val === 'HIGH');
-    }
-
     function evaluateCircuitPhysics() {
-      const baseAdj = buildBaseAdjacency();
-      const uno5vSources = ['UNO_5V'];
-      const unoGndSources = ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP'];
+      const adj = buildAdjacencyMap();
 
-      // 1. OLED Display
-      const oledVcc = !!areConnected(baseAdj, 'OLED_VCC', uno5vSources);
-      const oledGnd = !!areConnected(baseAdj, 'OLED_GND', unoGndSources);
-      state.oledPowered = oledVcc && oledGnd;
-      updateOledVisual();
+      // 1. Check 220VAC Breaker & 12VAC Transformer Output
+      const has12VAC = state.breakerOn;
+      document.getElementById('tx-led').setAttribute('fill', has12VAC ? '#facc15' : '#422006');
 
-      // D13 LED on Arduino
+      const badge220 = document.getElementById('badge-220v');
+      const badge12 = document.getElementById('badge-12v');
+      if (state.breakerOn) {
+        badge220.className = 'px-2.5 py-1 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5';
+        badge220.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> 220VAC: ON';
+        badge12.className = 'px-2.5 py-1 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        badge12.textContent = '12VAC Out: 12.0V AC';
+      } else {
+        badge220.className = 'px-2.5 py-1 rounded-full font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5';
+        badge220.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> 220VAC: OFF';
+        badge12.className = 'px-2.5 py-1 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+        badge12.textContent = '12VAC Out: 0V';
+      }
+
+      // 2. Check Control Side (Arduino -> Relay VCC, GND, IN)
+      const vccOk = !!areConnected(adj, 'RELAY_VCC', ['UNO_5V']);
+      const gndOk = !!areConnected(adj, 'RELAY_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
+
+      // Find which Arduino Digital pin is wired to RELAY_IN
+      const digitalPinIds = ['UNO_D2','UNO_D3','UNO_D4','UNO_D5','UNO_D6','UNO_D7','UNO_D8','UNO_D9','UNO_D10','UNO_D11','UNO_D12','UNO_D13'];
+      const connectedSignalPinId = areConnected(adj, 'RELAY_IN', digitalPinIds);
+
+      // Update Relay Power LED
+      const relayPowerOk = vccOk && gndOk;
+      document.getElementById('relay-led-pwr').setAttribute('fill', relayPowerOk ? '#ef4444' : '#450a0a');
+
+      const badgeRelayPwr = document.getElementById('badge-relay-pwr');
+      if (relayPowerOk && connectedSignalPinId) {
+        const pinNum = connectedSignalPinId.replace('UNO_D', '');
+        badgeRelayPwr.className = 'px-2.5 py-1 rounded-full font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/40';
+        badgeRelayPwr.textContent = `Relay 5V: พร้อม (IN ← D${pinNum})`;
+      } else {
+        badgeRelayPwr.className = 'px-2.5 py-1 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+        badgeRelayPwr.textContent = 'Relay 5V: สายควบคุมยังไม่ครบ';
+      }
+
+      // Update Arduino D13 built-in LED 'L'
       const d13High = state.isRunning && state.digitalStates[13] === 1;
       document.getElementById('uno-led-l').setAttribute('fill', d13High ? '#facc15' : '#713f12');
 
-      // 2. Evaluate All 4 Relay Modules
-      let activeCoilsCount = 0;
-      let totalCoilCurrentMa = 0;
+      // 3. Determine if Relay Coil is Energized
+      let signalHigh = false;
+      if (state.isRunning && connectedSignalPinId) {
+        const pinNum = parseInt(connectedSignalPinId.replace('UNO_D', ''), 10);
+        if (state.pinModes[pinNum] === 'OUTPUT' && state.digitalStates[pinNum] === 1) {
+          signalHigh = true;
+        }
+      }
 
-      // Relay #1: 1-Ch Active HIGH
-      const r1Vcc = !!areConnected(baseAdj, 'R1_VCC', uno5vSources);
-      const r1Gnd = !!areConnected(baseAdj, 'R1_GND', unoGndSources);
-      const r1Pwr = r1Vcc && r1Gnd;
-      document.getElementById('r1-led-pwr').setAttribute('fill', r1Pwr ? '#ef4444' : '#450a0a');
-      const r1On = checkChannelEnergized(baseAdj, r1Vcc, r1Gnd, 'R1_IN1', false);
-      document.getElementById('r1-led-act').setAttribute('fill', r1On ? '#22c55e' : '#052e16');
-      document.getElementById('r1-armature').setAttribute('y2', r1On ? '55' : '79');
-      if (r1On) { activeCoilsCount++; totalCoilCurrentMa += 70; }
+      const prevRelayEnergized = state.relayEnergized;
+      state.relayEnergized = relayPowerOk && signalHigh;
 
-      // Relay #2: 2-Ch Active HIGH
-      const r2Vcc = !!areConnected(baseAdj, 'R2_VCC', uno5vSources);
-      const r2Gnd = !!areConnected(baseAdj, 'R2_GND', unoGndSources);
-      const r2Ch1On = checkChannelEnergized(baseAdj, r2Vcc, r2Gnd, 'R2_IN1', false);
-      const r2Ch2On = checkChannelEnergized(baseAdj, r2Vcc, r2Gnd, 'R2_IN2', false);
-      document.getElementById('r2-ch1
+      if (state.relayEnergized !== prevRelayEnergized) {
+        playRelayClick(state.relayEnergized);
+      }
+
+      // Update Relay Visual Armature & Green Active LED
+      const armature = document.getElementById('relay-armature');
+      const actLed = document.getElementById('relay-led-act');
+      const badgeRelayState = document.getElementById('badge-relay-state');
+
+      if (state.relayEnergized) {
+        armature.setAttribute('x2', '38');
+        armature.setAttribute('y2', '63'); // Switched to NO!
+        actLed.setAttribute('fill', '#22c55e');
+        badgeRelayState.className = 'px-2.5 py-1 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        badgeRelayState.textContent = 'หน้าสัมผัส: COM → NO (ทำงาน)';
+      } else {
+        armature.setAttribute('x2', '38');
+        armature.setAttribute('y2', '89'); // Resting at NC
+        actLed.setAttribute('fill', '#052e16');
+        badgeRelayState.className = 'px-2.5 py-1 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+        badgeRelayState.textContent = 'หน้าสัมผัส: COM → NC (ปกติ)';
+      }
+
+      // 4. Solve 12VAC Load Circuit Loop (12VAC_1 -> Relay Switch -> Lamp -> 12VAC_2)
+      // Internal Relay Contact connects RELAY_COM to RELAY_NO (if energized) or RELAY_NC (if de-energized)
+      const acAdj = buildAdjacencyMap();
+      if (state.relayEnergized) {
+        acAdj['RELAY_COM'].add('RELAY_NO');
+        acAdj['RELAY_NO'].add('RELAY_COM');
+      } else {
+        acAdj['RELAY_COM'].add('RELAY_NC');
+        acAdj['RELAY_NC'].add('RELAY_COM');
+      }
+
+      // Check valid closed loop:
+      // Path A: AC12_1 -> LAMP_1 and LAMP_2 -> AC12_2
+      // Path B: AC12_1 -> LAMP_2 and LAMP_1 -> AC12_2
+      // (Ensuring AC12_1 is not directly shorted to AC12_2 without passing through the lamp)
+      const directShort = !!areConnected(buildAdjacencyMap(), 'AC12_1', ['AC12_2']);
+
+      // Remove LAMP_1 <-> LAMP_2 bridge (lamp is the load between them)
+      const path1 = areConnected(acAdj, 'AC12_1', ['LAMP_1']) && areConnected(acAdj, 'AC12_2', ['LAMP_2']);
+      const path2 = areConnected(acAdj, 'AC12_1', ['LAMP_2']) && areConnected(acAdj, 'AC12_2', ['LAMP_1']);
+
+      const loadCircuitClosed = !directShort && (path1 || path2);
+      state.bulbLit = has12VAC && loadCircuitClosed;
+
+      // Update 12VAC Lamp Visuals
+      const glowOuter = document.getElementById('bulb-glow-outer');
+      const glowInner = document.getElementById('bulb-glow-inner');
+      const filament = document.getElementById('bulb-filament');
+
+      if (state.bulbLit) {
+        glowOuter.setAttribute('opacity', '1');
+        glowInner.setAttribute('opacity', '0.9');
+        filament.setAttribute('stroke', '#ffffff');
+      } else {
+        glowOuter.setAttribute('opacity', '0');
+        glowInner.setAttribute('opacity', '0');
+        filament.setAttribute('stroke', '#475569');
+      }
+
+      // Update AC Wire Flow Animations
+      document.querySelectorAll('.wire-path').forEach(el => {
+        const wId = el.getAttribute('data-wire-id');
+        const w = state.wires.find(item => item.id === wId);
+        if (!w) return;
+        const isAcWire = [w.from, w.to].some(p => p.startsWith('AC12') || p.startsWith('LAMP') || p === 'RELAY_COM' || p === 'RELAY_NO' || p === 'RELAY_NC');
+        if (state.bulbLit && isAcWire) {
+          el.classList.add('wire-energized-ac');
+        } else {
+          el.classList.remove('wire-energized-ac');
+        }
+      });
+
+      // 5. Update Diagnostic Status Message at Bottom
+      updateDiagnosticsText(vccOk, gndOk, connectedSignalPinId, directShort, loadCircuitClosed);
+    }
+
+    function updateDiagnosticsText(vccOk, gndOk, sigPin, directShort, loadCircuitClosed) {
+      const diag = document.getElementById('circuitDiagnosis');
+
+      if (directShort) {
+        diag.className = 'flex items-center gap-2 text-rose-400 font-bold';
+        diag.innerHTML = '<span>🚨 อันตราย! ขั้วไฟ 12VAC (AC1 และ AC2) ลัดวงจร (Short Circuit) กรุณาแก้ไขสายไฟ</span>';
+        return;
+      }
+      if (!vccOk || !gndOk || !sigPin) {
+        diag.className = 'flex items-center gap-2 text-amber-300 font-medium';
+        diag.innerHTML = '<span>⚠️ ฝั่งควบคุม DC: กรุณาต่อ 5V → VCC, GND → GND และ ขา Digital (เช่น D7) → IN ของ Relay</span>';
+        return;
+      }
+      if (!state.breakerOn) {
+        diag.className = 'flex items-center gap-2 text-amber-300 font-medium';
+        diag.innerHTML = '<span>🔌 ไฟหลัก 220VAC ปิดอยู่: คลิกที่สวิตช์ "BREAKER" สีแดงบนกล่องหม้อแปลงเพื่อจ่ายไฟ 12VAC</span>';
+        return;
+      }
+      if (state.bulbLit) {
+        diag.className = 'flex items-center gap-2 text-emerald-400 font-bold';
+        diag.innerHTML = '<span>💡 วงจรสมบูรณ์! กระแสไฟ 12VAC ไหลผ่านหน้าสัมผัส Relay ทำให้หลอดไฟสว่าง</span>';
+      } else {
+        diag.className = 'flex items-center gap-2 text-sky-300 font-medium';
+        diag.innerHTML = '<span>✅ ระบบพร้อมทำงาน: ตรวจสอบการต่อสาย 12VAC → COM → NO → หลอดไฟ → 12VAC และกดปุ่ม "อัปโหลด & รัน"</span>';
+      }
+    }
+
+    /**
+     * ============================================================================
+     * 5. ARDUINO C++ INTERPRETER & EXECUTION ENGINE
+     * ============================================================================
+     */
+    const cppEditor = document.getElementById('cppEditor');
+    const lineNumbers = document.getElementById('lineNumbers');
+    const serialConsole = document.getElementById('serialConsole');
+
+    function updateLineNumbers() {
+      const lines = cppEditor.value.split('\n').length;
+      lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+    }
+    cppEditor.addEventListener('input', updateLineNumbers);
+    cppEditor.addEventListener('scroll', () => {
+      lineNumbers.scrollTop = cppEditor.scrollTop;
+    });
+    updateLineNumbers();
+
+    function logConsole(msg, colorClass = 'text-slate-300') {
+      const line = document.createElement('div');
+      line.className = colorClass;
+      const now = new Date().toLocaleTimeString('th-TH', { hour12: false });
+      line.textContent = `[${now}] ${msg}`;
+      serialConsole.appendChild(line);
+      serialConsole.scrollTop = serialConsole.scrollHeight;
+    }
+
+    // Parse C++ variables, setup(), and loop() into executable step sequences
+    function parseArduinoCpp(code) {
+      // Strip single-line and multi-line comments
+      const cleanCode = code
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/.*$/gm, '');
+
+      // Extract integer variable declarations (e.g., int relayPin = 7; or #define RELAY 7)
+      const vars = {
+        HIGH: 1, LOW: 0,
+        OUTPUT: 'OUTPUT', INPUT: 'INPUT',
+        LED_BUILTIN: 13
+      };
+
+      const defineRegex = /#define\s+([a-zA-Z_]\w*)\s+(\d+)/g;
+      let m;
+      while ((m = defineRegex.exec(cleanCode)) !== null) {
+        vars[m[1]] = parseInt(m[2], 10);
+      }
+
+      const intRegex = /(?:const\s+)?(?:int|byte|uint8_t)\s+([a-zA-Z_]\w*)\s*=\s*(\d+)\s*;/g;
+      while ((m = intRegex.exec(cleanCode)) !== null) {
+        vars[m[1]] = parseInt(m[2], 10);
+      }
+
+      function resolveVal(token) {
+        token = token.trim();
+        if (vars.hasOwnProperty(token)) return vars[token];
+        if (/^A\d+$/.test(token)) return 14 + parseInt(token.slice(1), 10);
+        if (!isNaN(Number(token))) return Number(token);
+        return token;
+      }
+
+      function extractBlock(fnName) {
+        const idx = cleanCode.search(new RegExp(`void\\s+${fnName}\\s*\\(`));
+        if (idx === -1) return null;
+        const braceStart = cleanCode.indexOf('{', idx);
+        if (braceStart === -1) return null;
+
+        let depth = 0;
+        for (let i = braceStart; i < cleanCode.length; i++) {
+          if (cleanCode[i] === '{') depth++;
+          else if (cleanCode[i] === '}') {
+            depth--;
+            if (depth === 0) {
+              return cleanCode.slice(braceStart + 1, i);
+            }
+          }
+        }
+        return null;
+      }
+
+      function parseStatements(blockBody) {
+        if (!blockBody) return [];
+        const stmts = [];
+        const rawStatements = blockBody.split(';');
+
+        for (let raw of rawStatements) {
+          const s = raw.trim();
+          if (!s) continue;
+
+          // pinMode(pin, mode)
+          let match = s.match(/^pinMode\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/);
+          if (match) {
+            stmts.push({ type: 'pinMode', pin: resolveVal(match[1]), mode: resolveVal(match[2]) });
+            continue;
+          }
+
+          // digitalWrite(pin, val)
+          match = s.match(/^digitalWrite\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)$/);
+          if (match) {
+            stmts.push({ type: 'digitalWrite', pin: resolveVal(match[1]), value: resolveVal(match[2]) });
+            continue;
+          }
+
+          // delay(ms)
+          match = s.match(/^delay\s*\(\s*([^)]+)\s*\)$/);
+          if (match) {
+            stmts.push({ type: 'delay', ms: Math.max(50, Number(resolveVal(match[1])) || 500) });
+            continue;
+          }
+
+          // Serial.println(...) or Serial.print(...)
+          match = s.match(/^Serial\.print(?:ln)?\s*\(\s*["'](.*)["']\s*\)$/);
+          if (match) {
+            stmts.push({ type: 'print', text: match[1] });
+            continue;
+          }
+        }
+        return stmts;
+      }
+
+      const setupBody = extractBlock('setup');
+      const loopBody = extractBlock('loop');
+
+      if (setupBody === null || loopBody === null) {
+        throw new Error('ไม่พบฟังก์ชัน void setup() หรือ void loop() ในโค้ด C++');
+      }
+
+      return {
+        setup: parseStatements(setupBody),
+        loop: parseStatements(loopBody)
+      };
+    }
+
+    function startSimulation() {
+      stopSimulation(false);
+
+      let program;
+      try {
+        program = parseArduinoCpp(cppEditor.value);
+      } catch (err) {
+        logConsole(`[Compile Error] ${err.message}`, 'text-rose-400 font-bold');
+        return;
+      }
+
+      state.isRunning = true;
+      state.pinModes = {};
+      state.digitalStates = {};
+
+      // Update UI Buttons
+      const btnRun = document.getElementById('btnRun');
+      const btnStop = document.getElementById('btnStop');
+      btnRun.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span> กำลังรันโค้ด...';
+      btnStop.disabled = false;
+      btnStop.className = 'px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold rounded-lg shadow transition flex items-center gap-1.5 cursor-pointer';
+      document.getElementById('serialStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+
+      logConsole('กำลังคอมไพล์และอัปโหลดโค้ดลงบอร์ด Arduino Uno R3...', 'text-sky-400');
+
+      // Execute setup() steps synchronously
+      for (const step of program.setup) {
+        executeInstruction(step);
+      }
+      evaluateCircuitPhysics();
+
+      // Execute loop() steps asynchronously with real delay() timing
+      if (program.loop.length === 0) return;
+
+      let stepIndex = 0;
+      let totalDelayInCycle = 0;
+
+      function runNextStep() {
+        if (!state.isRunning) return;
+
+        const step = program.loop[stepIndex];
+        stepIndex++;
+
+        if (step.type === 'delay') {
+          totalDelayInCycle += step.ms;
+          if (stepIndex >= program.loop.length) {
+            stepIndex = 0;
+            totalDelayInCycle = 0;
+          }
+          state.runLoopTimer = setTimeout(runNextStep, step.ms);
+        } else {
+          executeInstruction(step);
+          evaluateCircuitPhysics();
+
+          if (stepIndex >= program.loop.length) {
+            stepIndex = 0;
+            // Safety guard if user wrote loop() with 0 delay() so browser never freezes
+            const guardDelay = totalDelayInCycle === 0 ? 150 : 0;
+            totalDelayInCycle = 0;
+            state.runLoopTimer = setTimeout(runNextStep, guardDelay);
+          } else {
+            runNextStep();
+          }
+        }
+      }
+
+      runNextStep();
+    }
+
+    function executeInstruction(step) {
+      if (step.type === 'pinMode') {
+        state.pinModes[step.pin] = step.mode;
+      } else if (step.type === 'digitalWrite') {
+        state.digitalStates[step.pin] = step.value ? 1 : 0;
+      } else if (step.type === 'print') {
+        logConsole(step.text, 'text-emerald-300');
+      }
+    }
+
+    function stopSimulation(logMessage = true) {
+      state.isRunning = false;
+      if (state.runLoopTimer) {
+        clearTimeout(state.runLoopTimer);
+        state.runLoopTimer = null;
+      }
+      state.digitalStates = {};
+
+      const btnRun = document.getElementById('btnRun');
+      const btnStop = document.getElementById('btnStop');
+      btnRun.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg> อัปโหลด &amp; รัน (Run)';
+      btnStop.disabled = true;
+      btnStop.className = 'px-3 py-1.5 bg-rose-600/40 text-rose-300/50 cursor-not-allowed text-xs sm:text-sm font-bold rounded-lg transition flex items-center gap-1.5';
+      document.getElementById('serialStatusDot').className = 'w-2 h-2 rounded-full bg-slate-600';
+
+      evaluateCircuitPhysics();
+      if (logMessage) {
+        logConsole('[หยุดทำงาน] หยุดการรันโปรแกรมแล้ว', 'text-slate-400');
+      }
+    }
+
+    /**
+     * ============================================================================
+     * 6. UI EVENT LISTENERS, BREAKER SWITCH, & AUTO-WIRE PRESET
+     * ============================================================================
+     */
+    // Main 220VAC Breaker Switch Toggle
+    document.getElementById('mainBreakerSwitch').addEventListener('click', () => {
+      state.breakerOn = !state.breakerOn;
+      const handle = document.getElementById('breakerHandle');
+      const text = document.getElementById('breakerText');
+
+      if (state.breakerOn) {
+        handle.setAttribute('y', '20');
+        handle.setAttribute('fill', '#22c55e');
+        text.setAttribute('fill', '#86efac');
+        text.textContent = 'ON';
+        logConsole('[แหล่งจ่ายไฟ] เปิดเบรกเกอร์ 220VAC -> หม้อแปลงจ่ายไฟ 12VAC แล้ว', 'text-amber-300');
+      } else {
+        handle.setAttribute('y', '34');
+        handle.setAttribute('fill', '#ef4444');
+        text.setAttribute('fill', '#fca5a5');
+        text.textContent = 'OFF';
+        logConsole('[แหล่งจ่ายไฟ] ปิดเบรกเกอร์ 220VAC', 'text-slate-400');
+      }
+      evaluateCircuitPhysics();
+    });
+
+    // Arduino Reset Button
+    document.getElementById('arduinoResetBtn').addEventListener('click', () => {
+      if (state.isRunning) {
+        logConsole('[Arduino] กดปุ่ม RESET — รีสตาร์ทโปรแกรมใหม่', 'text-sky-400');
+        startSimulation();
+      }
+    });
+
+    // Wire Color Buttons
+    document.querySelectorAll('.color-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-2', 'ring-white', 'scale-110'));
+        btn.classList.add('ring-2', 'ring-white', 'scale-110');
+        state.currentWireColor = btn.getAttribute('data-color');
+        if (state.selectedPinId) {
+          previewWire.setAttribute('stroke', state.currentWireColor);
+        }
+      });
+    });
+
+    // Auto-Wire Complete Circuit Button
+    document.getElementById('btnAutoWire').addEventListener('click', () => {
+      state.wires = [
+        // Control Side (Arduino -> Relay)
+        { id: 'w_vcc', from: 'UNO_5V',    to: 'RELAY_VCC', color: '#ef4444' }, // Red: 5V -> VCC
+        { id: 'w_gnd', from: 'UNO_GND1',  to: 'RELAY_GND', color: '#1e293b' }, // Black: GND -> GND
+        { id: 'w_sig', from: 'UNO_D7',    to: 'RELAY_IN',  color: '#eab308' }, // Yellow: D7 -> IN
+
+        // Power Side (12VAC Transformer -> Relay COM/NO -> 12VAC Lamp)
+        { id: 'w_ac1', from: 'AC12_1',    to: 'RELAY_COM', color: '#92400e' }, // Brown: 12VAC AC1 -> COM
+        { id: 'w_no',  from: 'RELAY_NO',  to: 'LAMP_1',    color: '#ef4444' }, // Red: Relay NO -> Lamp 1
+        { id: 'w_ac2', from: 'LAMP_2',    to: 'AC12_2',    color: '#3b82f6' }  // Blue: Lamp 2 -> 12VAC AC2
+      ];
+
+      // Automatically turn ON main 220VAC breaker for smooth UX
+      if (!state.breakerOn) {
+        document.getElementById('mainBreakerSwitch').dispatchEvent(new Event('click'));
+      }
+
+      renderWires();
+      evaluateCircuitPhysics();
+      logConsole('[ต่อวงจรอัตโนมัติ] เชื่อมต่อ 5V, GND, D7 และวงจร 12VAC ผ่านหน้าสัมผัส COM-NO เรียบร้อยแล้ว!', 'text-indigo-300 font-semibold');
+    });
+
+    // Clear All Wires Button
+    document.getElementById('btnClearWires').addEventListener('click', () => {
+      state.wires = [];
+      cancelWiring();
+      renderWires();
+      evaluateCircuitPhysics();
+      logConsole('[ล้างสายไฟ] ลบสายไฟทั้งหมดออกจากวงจรแล้ว', 'text-slate-400');
+    });
+
+    // Run & Stop Buttons
+    document.getElementById('btnRun').addEventListener('click', startSimulation);
+    document.getElementById('btnStop').addEventListener('click', () => stopSimulation(true));
+    document.getElementById('btnClearConsole').addEventListener('click', () => {
+      serialConsole.innerHTML = '';
+    });
+
+    // C++ Code Presets
+    document.getElementById('presetBlink').addEventListener('click', () => {
+      cppEditor.value = `// โปรแกรมควบคุม Relay 5V เปิด-ปิดหลอดไฟ 12VAC สลับทุก 2 วินาที
+int relayPin = 7; // ต่อขา D7 ของ Arduino เข้ากับขา IN ของ Relay
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(relayPin, OUTPUT);
+  Serial.println("System Ready: Blink Mode");
+}
+
+void loop() {
+  digitalWrite(relayPin, HIGH); // สั่ง Relay ทำงาน (COM -> NO)
+  Serial.println("Relay: ON -> หลอดไฟ 12VAC ติด");
+  delay(2000);
+
+  digitalWrite(relayPin, LOW);  // สั่ง Relay หยุดทำงาน (COM -> NC)
+  Serial.println("Relay: OFF -> หลอดไฟ 12VAC ดับ");
+  delay(2000);
+}`;
+      updateLineNumbers();
+      if (state.isRunning) startSimulation();
+    });
+
+    document.getElementById('presetAlwaysOn').addEventListener('click', () => {
+      cppEditor.value = `// โปรแกรมสั่งเปิดหลอดไฟ 12VAC ค้างไว้ตลอดเวลา
+int relayPin = 7;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, HIGH); // สั่ง Relay ทำงานค้างไว้
+  Serial.println("Relay: ON (เปิดหลอดไฟ 12VAC ค้าง)");
+}
+
+void loop() {
+  // ทำงานค้างไว้
+  delay(1000);
+}`;
+      updateLineNumbers();
+      if (state.isRunning) startSimulation();
+    });
+
+    document.getElementById('presetFast').addEventListener('click', () => {
+      cppEditor.value = `// โปรแกรมทดสอบจังหวะการทำงานของ Relay (0.6 วินาที)
+int relayPin = 7;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(relayPin, OUTPUT);
+  pinMode(13, OUTPUT); // ไฟ LED บนบอร์ดทำงานพร้อมกัน
+}
+
+void loop() {
+  digitalWrite(relayPin, HIGH);
+  digitalWrite(13, HIGH);
+  Serial.println("ON (12VAC Lamp LIT)");
+  delay(600);
+
+  digitalWrite(relayPin, LOW);
+  digitalWrite(13, LOW);
+  Serial.println("OFF");
+  delay(600);
+}`;
+      updateLineNumbers();
+      if (state.isRunning) startSimulation();
+    });
+
+    // Initialize Board Pins & Initial State on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAllPins();
+      evaluateCircuitPhysics();
+    });
+  </script>
+</body>
+</html>
