@@ -1406,11 +1406,11 @@ void loop() {
         }
 
         // OLED: display.println("...")
-        m = line.match(/^display\.println\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
+        m = line.match(/^display\.(print|println)\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
         if (m) {
           if (oledCursorLine < 6) {
-            oledBuffer[oledCursorLine] = m[1];
-            oledCursorLine++;
+            oledBuffer[oledCursorLine] += m[2];
+            if (m[1] === 'println') oledCursorLine++;
           }
           continue;
         }
