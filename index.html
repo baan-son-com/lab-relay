@@ -800,9 +800,6 @@ void loop() {
     }
     
     // OLED 6-Line Buffer
-    let oledBuffer = ['', '', '', '', '', ''];
-    let oledCursorLine = 0;
-
     function buildRelayBoard(chCount) {
       relayChannels = chCount;
       const container = document.getElementById('relay-board-container');
@@ -1096,18 +1093,6 @@ void loop() {
         if (isConnected(adj, pinId, dp)) return dp;
       }
       return null;
-    }
-
-    function updateOLEDVisual(powered) {
-      for (let i = 1; i <= 6; i++) {
-        const el = document.getElementById(`oled-line-${i}`);
-        if (!el) continue;
-        if (!powered) {
-          el.textContent = '';
-        } else {
-          el.textContent = oledBuffer[i - 1] || '';
-        }
-      }
     }
 
     function evaluateCircuit() {
@@ -1530,6 +1515,7 @@ void loop() {
       isRunning = false;
       runToken++;
       pinStates = {};
+      oledDrawItems = []; // เพิ่มบรรทัดนี้เพื่อให้หน้าจอเคลียร์เมื่อกดหยุด
       evaluateCircuit();
 
       btnRun.disabled = false;
