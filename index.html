@@ -1354,12 +1354,24 @@ void loop() {
       return code.slice(start, i - 1);
     }
 
-    async function execStatements(block, vars, myToken) {
+   async function execStatements(block, vars, myToken) {
       const lines = block.split('\n');
       for (let raw of lines) {
         if (myToken !== runToken) return;
         const line = raw.replace(/\/\/.*$/, '').trim();
         if (!line) continue;
+
+        // ข้ามบรรทัดประกาศโครงสร้าง C++ ทั่วไป เพื่อให้เขียนโค้ดมาตรฐานได้ไม่ติดขัด
+        if (
+          line.startsWith('#') ||
+          line.startsWith('Adafruit_SSD1306') ||
+          line.startsWith('if (!display.begin') ||
+          line.startsWith('for (;;)') ||
+          line === '}' ||
+          line === '{'
+        ) {
+          continue;
+        }
 
         // digitalWrite(pin, HIGH/LOW)
         let m = line.match(/^digitalWrite\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)\s*;?$/);
@@ -1383,8 +1395,8 @@ void loop() {
           continue;
         }
 
-        // Serial.println("...")
-        m = line.match(/^Serial\.println\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
+        // Serial.print / Serial.println
+        m = line.match(/^Serial\.(?:print|println)\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
         if (m) {
           logSerial(m[1]);
           continue;
@@ -1405,11 +1417,21 @@ void loop() {
           continue;
         }
 
-        // OLED: display.println("...")
+        // OLED: รองรับทั้ง display.print("...") และ display.println("...")
         m = line.match(/^display\.(print|println)\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
         if (m) {
           if (oledCursorLine < 6) {
             oledBuffer[oledCursorLine] += m[2];
+            if (m[1] === 'println') oledCursorLine++;
+          }
+          continue;
+        }
+
+        // OLED: รองรับการแสดงค่าตัวแปร เช่น display.print(count) หรือ display.println(val)
+        m = line.match(/^display\.(print|println)\s*\(\s*([a-zA-Z_]\w*)\s*\)\s*;?$/);
+        if (m && vars[m[2]] !== undefined) {
+          if (oledCursorLine < 6) {
+            oledBuffer[oledCursorLine] += String(vars[m[2]]);
             if (m[1] === 'println') oledCursorLine++;
           }
           continue;
