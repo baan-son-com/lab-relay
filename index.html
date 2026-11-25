@@ -107,6 +107,52 @@
 </head>
 <body class="h-screen flex flex-col">
 
+  <!-- กล่องแจ้งเตือนความปลอดภัย (Safety Warning Modal) -->
+<div id="safetyWarningModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4">
+  <div class="bg-slate-900 border-2 border-amber-500/80 rounded-2xl max-w-md w-full p-6 shadow-2xl text-slate-100">
+    
+    <!-- ไอคอนและหัวข้อแจ้งเตือน -->
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center shrink-0">
+        <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-amber-400 leading-snug">คำเตือนด้านความปลอดภัย</h2>
+        <p class="text-xs text-slate-400">ข้อควรระวังก่อนการต่อวงจรไฟฟ้าจริง</p>
+      </div>
+    </div>
+
+    <!-- ข้อความแจ้งเตือนที่เรียบเรียงใหม่ -->
+    <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 mb-5 text-sm leading-relaxed text-slate-200 space-y-2">
+      <p>
+        หน้าเว็บนี้เป็นเพียง <span class="text-sky-400 font-semibold">ระบบจำลองการทำงาน (Simulator)</span> เพื่อการเรียนรู้เท่านั้น
+      </p>
+      <p>
+        การต่อวงจรไฟฟ้าในสถานที่จริง โดยเฉพาะวงจรที่มีแรงดันไฟฟ้าสูง (เช่น 220VAC) 
+        <span class="text-rose-400 font-bold">ต้องมีผู้เชี่ยวชาญคอยดูแลอย่างใกล้ชิด</span> 
+        เพื่อป้องกันอุบัติเหตุและอันตรายร้ายแรงต่อชีวิตและทรัพย์สิน หากเกิดข้อผิดพลาดจากการต่อวงจร
+      </p>
+    </div>
+
+    <!-- ปุ่มกดรับทราบ -->
+    <button 
+      id="btnCloseSafetyModal" 
+      type="button"
+      class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl shadow-lg transition cursor-pointer"
+    >
+      รับทราบและเข้าใจแล้ว
+    </button>
+  </div>
+</div>
+
+<script>
+  document.getElementById('btnCloseSafetyModal').addEventListener('click', function () {
+    document.getElementById('safetyWarningModal').style.display = 'none';
+  });
+</script>
+  
   <!-- Top Navigation / Toolbar (ไม่มีปุ่ม Run/Stop ที่นี่ — อยู่ที่หน้าต่างเขียนโค้ดเท่านั้น) -->
   <header class="bg-slate-900 border-b border-slate-800 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shadow-lg z-30 shrink-0">
     <div class="flex items-center gap-2.5">
@@ -2699,6 +2745,53 @@ void loop() {
     // Initialize default 2-Ch Relay board & sync UI
     syncChannelButtons(2);
     buildRelayBoard(2);
+
+    <!-- กล่องแจ้งเตือนความปลอดภัย (Safety Warning Modal) -->
+<div id="safetyWarningModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4">
+  <div class="bg-slate-900 border-2 border-amber-500/80 rounded-2xl max-w-md w-full p-6 shadow-2xl text-slate-100">
+    
+    <!-- ไอคอนและหัวข้อแจ้งเตือน -->
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center shrink-0">
+        <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-amber-400 leading-snug">คำเตือนด้านความปลอดภัย</h2>
+        <p class="text-xs text-slate-400">ข้อควรระวังก่อนการต่อวงจรไฟฟ้าจริง</p>
+      </div>
+    </div>
+
+    <!-- ข้อความแจ้งเตือนที่เรียบเรียงใหม่ -->
+    <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 mb-5 text-sm leading-relaxed text-slate-200 space-y-2">
+      <p>
+        หน้าเว็บนี้เป็นเพียง <span class="text-sky-400 font-semibold">ระบบจำลองการทำงาน (Simulator)</span> เพื่อการเรียนรู้เท่านั้น
+      </p>
+      <p>
+        การต่อวงจรไฟฟ้าในสถานที่จริง โดยเฉพาะวงจรที่มีแรงดันไฟฟ้าสูง (เช่น 220VAC) 
+        <span class="text-rose-400 font-bold">ต้องมีผู้เชี่ยวชาญคอยดูแลอย่างใกล้ชิด</span> 
+        เพื่อป้องกันอุบัติเหตุและอันตรายร้ายแรงต่อชีวิตและทรัพย์สิน หากเกิดข้อผิดพลาดจากการต่อวงจร
+      </p>
+    </div>
+
+    <!-- ปุ่มกดรับทราบ -->
+    <button 
+      id="btnCloseSafetyModal" 
+      type="button"
+      class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl shadow-lg transition cursor-pointer"
+    >
+      รับทราบและเข้าใจแล้ว
+    </button>
+  </div>
+</div>
+
+<script>
+  document.getElementById('btnCloseSafetyModal').addEventListener('click', function () {
+    document.getElementById('safetyWarningModal').style.display = 'none';
+  });
+</script>
+  
   </script>
 </body>
 </html>
