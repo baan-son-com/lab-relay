@@ -858,6 +858,18 @@ void loop() {
     cppEditor.addEventListener('scroll', () => { lineNumbers.scrollTop = cppEditor.scrollTop; });
     updateLineNumbers();
 
+    // Support Tab indentation in textarea
+    cppEditor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = cppEditor.selectionStart;
+        const end = cppEditor.selectionEnd;
+        cppEditor.value = cppEditor.value.substring(0, start) + '  ' + cppEditor.value.substring(end);
+        cppEditor.selectionStart = cppEditor.selectionEnd = start + 2;
+        updateLineNumbers();
+      }
+    });
+
     // =========================================================================
     // 2. STATIC PINS & DYNAMIC RELAY BOARD
     // =========================================================================
@@ -952,7 +964,8 @@ void loop() {
     let pir1Motion = false;
     let pir2Motion = false;
     let ldrDark = false;
-    let pinStates = {};
+    let pinStates = {}; // key: 'UNO_D12', 'UNO_A0', etc. -> 1 or 0
+    let pinModes = {};  // key: 'UNO_D2', etc. -> 0 (INPUT), 1 (OUTPUT), 2 (INPUT_PULLUP)
     let relayEnergized = { 1: false, 2: false, 3: false, 4: false };
     let isRunning = false;
     let runToken = 0;
@@ -963,6 +976,25 @@ void loop() {
     let oledDimmed = false;
     let oledScrollDir = null; // 'right' | 'left' | null
     let lastOledSnapshot = '';
+
+    function normalizeUnoPinId(pin) {
+      if (typeof pin === 'string') {
+        const up = pin.trim().toUpperCase();
+        if (up.startsWith('UNO_')) return up;
+        if (/^A[0-5]$/.test(up)) return `UNO_${up}`;
+        if (/^D?\d+$/.test(up)) {
+          const num = parseInt(up.replace(/^D/, ''), 10);
+          if (num >= 14 && num <= 19) return `UNO_A${num - 14}`;
+          return `UNO_D${num}`;
+        }
+      }
+      const num = Number(pin);
+      if (!Number.isNaN(num)) {
+        if (num >= 14 && num <= 19) return `UNO_A${num - 14}`;
+        return `UNO_D${num}`;
+      }
+      return `UNO_D${pin}`;
+    }
 
     function getOLEDConnectionStatus(adj) {
       const a = adj || buildAdjacency();
@@ -1481,9 +1513,8 @@ void loop() {
       const group = getConnectedNodes(adj, nodeId);
       if (group.has('UNO_5V')) return true;
       for (const id of group) {
-        if (id.startsWith('UNO_D')) {
-          const num = parseInt(id.replace('UNO_D', ''), 10);
-          if (pinStates[num] === 1) return true;
+        if (id.startsWith('UNO_') && pinStates[id] === 1) {
+          return true;
         }
       }
       return false;
@@ -1511,7 +1542,7 @@ void loop() {
       }
 
       // Arduino Built-in L (D13)
-      document.getElementById('uno-led-l').setAttribute('fill', pinStates[13] ? '#facc15' : '#713f12');
+      document.getElementById('uno-led-l').setAttribute('fill', pinStates['UNO_D13'] ? '#facc15' : '#713f12');
 
       // OLED Power & I2C
       const oledStatus = getOLEDConnectionStatus(dcAdj);
@@ -1761,16 +1792,26 @@ void loop() {
     document.getElementById('btnAutoWire').addEventListener('click', autoWireCircuit);
 
     // =========================================================================
-    // 7. ARDUINO C++ TRANSPILER & RUNTIME ENGINE (Adafruit_SSD1306 + Full C++)
+    // 7. ARDUINO C++ TRANSPILER & RUNTIME ENGINE (FULL C++ & HARDWARE SUPPORT)
     // =========================================================================
     const serialConsole = document.getElementById('serialConsole');
     const serialStatusDot = document.getElementById('serialStatusDot');
     const btnRun = document.getElementById('btnRun');
     const btnStop = document.getElementById('btnStop');
 
+    let serialLineBuffer = '';
+    let serialFlushTimer = null;
     let lastLoggedMsg = '';
-    function logSerial(msg, cls = 'text-emerald-300', force = false) {
-      const text = String(msg);
+
+    function flushSerialLine(cls = 'text-emerald-300', force = false) {
+      if (serialFlushTimer) {
+        clearTimeout(serialFlushTimer);
+        serialFlushTimer = null;
+      }
+      if (!serialLineBuffer) return;
+      const text = serialLineBuffer;
+      serialLineBuffer = '';
+
       if (!force && text === lastLoggedMsg) return;
       lastLoggedMsg = text;
 
@@ -1779,20 +1820,37 @@ void loop() {
       div.textContent = text;
       serialConsole.appendChild(div);
 
-      while (serialConsole.children.length > 100) {
+      while (serialConsole.children.length > 120) {
         serialConsole.removeChild(serialConsole.firstChild);
       }
       serialConsole.scrollTop = serialConsole.scrollHeight;
     }
 
+    function appendSerialText(msg, newline = true, cls = 'text-emerald-300', force = false) {
+      serialLineBuffer += String(msg);
+      if (newline) {
+        flushSerialLine(cls, force);
+      } else {
+        if (serialFlushTimer) clearTimeout(serialFlushTimer);
+        serialFlushTimer = setTimeout(() => flushSerialLine(cls, force), 80);
+      }
+    }
+
+    function logSerial(msg, cls = 'text-emerald-300', force = true) {
+      flushSerialLine();
+      appendSerialText(msg, true, cls, force);
+    }
+
     document.getElementById('btnClearConsole').addEventListener('click', () => {
       serialConsole.innerHTML = '';
+      serialLineBuffer = '';
       lastLoggedMsg = '';
     });
 
-    function readHardwareDigitalPin(pinNum) {
+    function readHardwareDigitalPin(pin) {
+      const unoPin = normalizeUnoPinId(pin);
       const adj = buildAdjacency();
-      const unoPin = `UNO_D${pinNum}`;
+
       if (isConnected(adj, unoPin, 'PIR1_OUT') && isConnected(adj, 'PIR1_VCC', 'UNO_5V') && isConnected(adj, 'PIR1_GND', 'UNO_GND1')) {
         return pir1Motion ? 1 : 0;
       }
@@ -1802,20 +1860,52 @@ void loop() {
       if (isConnected(adj, unoPin, 'LDR_DO') && isConnected(adj, 'LDR_VCC', 'UNO_5V') && isConnected(adj, 'LDR_GND', 'UNO_GND1')) {
         return ldrDark ? 1 : 0;
       }
-      return pinStates[pinNum] || 0;
+      if (pinStates[unoPin] !== undefined) {
+        return pinStates[unoPin];
+      }
+      return pinModes[unoPin] === 2 ? 1 : 0; // INPUT_PULLUP defaults to HIGH
     }
 
-    function readHardwareAnalogPin(pinName) {
+    function readHardwareAnalogPin(pin) {
+      const unoPin = normalizeUnoPinId(pin);
       const adj = buildAdjacency();
-      const unoPin = `UNO_${pinName}`;
+
       if (isConnected(adj, unoPin, 'LDR_AO') && isConnected(adj, 'LDR_VCC', 'UNO_5V') && isConnected(adj, 'LDR_GND', 'UNO_GND1')) {
         return ldrDark ? 850 : 180;
       }
-      return 0;
+      if (isConnected(adj, unoPin, 'LDR_DO') && isConnected(adj, 'LDR_VCC', 'UNO_5V') && isConnected(adj, 'LDR_GND', 'UNO_GND1')) {
+        return ldrDark ? 1023 : 0;
+      }
+      if (isConnected(adj, unoPin, 'PIR1_OUT') && isConnected(adj, 'PIR1_VCC', 'UNO_5V') && isConnected(adj, 'PIR1_GND', 'UNO_GND1')) {
+        return pir1Motion ? 1023 : 0;
+      }
+      if (isConnected(adj, unoPin, 'PIR2_OUT') && isConnected(adj, 'PIR2_VCC', 'UNO_5V') && isConnected(adj, 'PIR2_GND', 'UNO_GND1')) {
+        return pir2Motion ? 1023 : 0;
+      }
+      return pinStates[unoPin] ? 1023 : 0;
+    }
+
+    function splitTopLevelCommas(str) {
+      const parts = [];
+      let depth = 0;
+      let current = '';
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        if (ch === '(' || ch === '[' || ch === '{') depth++;
+        else if (ch === ')' || ch === ']' || ch === '}') depth--;
+        if (ch === ',' && depth === 0) {
+          parts.push(current);
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      if (current.trim()) parts.push(current);
+      return parts;
     }
 
     function transpileArduinoToAsyncJS(code) {
-      // 1. Preserve string literals while stripping comments
+      // 1. Preserve string and char literals while stripping comments
       const strings = [];
       let js = code.replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, (m) => {
         const idx = strings.length;
@@ -1826,70 +1916,102 @@ void loop() {
       // Strip C/C++ comments
       js = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
-      // 2. Preprocessor directives & PROGMEM
-      js = js.replace(/^\s*#include\s+.*$/gm, '');
-      js = js.replace(/^\s*#define\s+([a-zA-Z_]\w*)\s+(.+)$/gm, 'const $1 = $2;');
+      // 2. Preprocessor directives (#include, #define, #ifdef, etc.) & PROGMEM
+      js = js.replace(/^\s*#\s*include\s+.*$/gm, '');
+      js = js.replace(/^\s*#\s*define\s+([a-zA-Z_]\w*)[ \t]+([^\r\n]+)$/gm, 'const $1 = $2;');
+      js = js.replace(/^\s*#\s*define\s+([a-zA-Z_]\w*)\s*$/gm, 'const $1 = true;');
+      js = js.replace(/^\s*#\s*(?:ifdef|ifndef|if|else|elif|endif|pragma)\b.*$/gm, '');
       js = js.replace(/\bPROGMEM\b/g, '');
 
       // 3. Arduino F() flash string macro -> normal string
       js = js.replace(/\bF\s*\(\s*(__STR_\d+__)\s*\)/g, '$1');
 
-      // 4. Object instantiations (Adafruit_SSD1306 display(...); etc.)
+      // 4. C++ numeric suffixes (1000UL, 500L, 3.14f, 0x10U)
+      js = js.replace(/\b(\d+(?:\.\d+)?(?:e[+-]?\d+)?)\s*(?:UL|LU|LLU|ULL|LL|U|L|F)\b/gi, '$1');
+
+      // 5. Object instantiations (Adafruit_SSD1306, Servo, etc.)
       js = js.replace(/\bAdafruit_SSD1306\s+([a-zA-Z_]\w*)\s*(?:=\s*Adafruit_SSD1306)?\s*\([^;]*\)\s*;/g, 'const $1 = __createSSD1306();');
       js = js.replace(/\bAdafruit_SSD1306\s+([a-zA-Z_]\w*)\s*;/g, 'const $1 = __createSSD1306();');
+      js = js.replace(/\bServo\s+([a-zA-Z_]\w*)\s*;/g, 'const $1 = __createServo();');
 
       // Strip C++ address-of (&Wire -> Wire) while preserving bitwise & and logical &&
-      js = js.replace(/(?<![&a-zA-Z0-9_\)])&\s*([a-zA-Z_]\w*)/g, '$1');
+      js = js.replace(/(^|[(\[,=:])\s*&\s*([a-zA-Z_]\w*)/g, '$1$2');
 
-      // 5. Function declarations & typed parameters
+      // 6. Remove C++ function forward declarations / prototypes (e.g., `void readSensor();`)
+      const cTypes = '(?:const\\s+|static\\s+|volatile\\s+|unsigned\\s+|signed\\s+)*(?:void|int|long|short|byte|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t|float|double|bool|boolean|char|String|word)\\s*\\*?';
+      js = js.replace(new RegExp(`^\\s*${cTypes}\\s+[a-zA-Z_]\\w*\\s*\\([^;{}]*\\)\\s*;`, 'gm'), '');
+
+      // 7. Function declarations & typed parameters (handles `void fn(void)`, default args, pointers, arrays)
       const userFunctions = new Set();
-      const cTypes = '(?:const\\s+|static\\s+|volatile\\s+|unsigned\\s+|signed\\s+)*(?:void|int|long|short|byte|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t|float|double|bool|boolean|char|String|word)';
       const fnRegex = new RegExp(`\\b${cTypes}\\s+([a-zA-Z_]\\w*)\\s*\\(([^)]*)\\)\\s*\\{`, 'g');
       js = js.replace(fnRegex, (_, fnName, params) => {
         userFunctions.add(fnName);
-        const cleanParams = params
-          .split(',')
+        const trimmed = params.trim();
+        if (!trimmed || trimmed === 'void') {
+          return `async function ${fnName}() {`;
+        }
+        const cleanParams = splitTopLevelCommas(trimmed)
           .map(p => p.trim())
           .filter(Boolean)
           .map(p => {
-            const parts = p.replace(/\[\s*\]/g, '').split(/\s+/);
-            return parts[parts.length - 1];
+            const eqIdx = p.indexOf('=');
+            let declPart = eqIdx !== -1 ? p.slice(0, eqIdx).trim() : p;
+            const defaultPart = eqIdx !== -1 ? ' = ' + p.slice(eqIdx + 1).trim() : '';
+            declPart = declPart.replace(/\[\s*\]/g, '').replace(/\*/g, ' ').replace(/&/g, ' ').trim();
+            const parts = declPart.split(/\s+/);
+            return parts[parts.length - 1] + defaultPart;
           })
           .join(', ');
         return `async function ${fnName}(${cleanParams}) {`;
       });
 
-      // Automatically await calls to user-defined helper functions (excluding setup/loop declarations)
+      // Automatically await calls to user-defined helper functions (excluding setup/loop declarations and object methods)
       for (const fnName of userFunctions) {
         if (fnName === 'setup' || fnName === 'loop') continue;
-        const callRegex = new RegExp(`(?<!function\\s+)(?<!await\\s+)\\b${fnName}\\s*\\(`, 'g');
+        const callRegex = new RegExp(`(?<!function\\s+)(?<!await\\s+)(?<!\\.)\\b${fnName}\\s*\\(`, 'g');
         js = js.replace(callRegex, `await ${fnName}(`);
       }
 
-      // 6. C++ typed arrays: int arr[] = {1, 2}; or int arr[5];
-      const varTypes = '(?:const\\s+|static\\s+|volatile\\s+|unsigned\\s+|signed\\s+)*(?:int|long|short|byte|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t|float|double|bool|boolean|char|word)';
+      // 8. C++ typed arrays & char strings
+      const varTypes = '(?:const\\s+|static\\s+|volatile\\s+|unsigned\\s+|signed\\s+)*(?:int|long|short|byte|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t|float|double|bool|boolean|char|word)\\s*\\*?';
+      js = js.replace(/\b(?:const\s+|static\s+)?char\s+([a-zA-Z_]\w*)\s*\[\s*\d*\s*\]\s*=\s*(__STR_\d+__)\s*;/g, 'let $1 = $2;');
       js = js.replace(new RegExp(`\\b${varTypes}\\s+([a-zA-Z_]\\w*)\\s*\\[\\s*\\d*\\s*\\]\\s*=\\s*\\{([^}]*)\\}\\s*;`, 'g'), 'let $1 = [$2];');
       js = js.replace(new RegExp(`\\b${varTypes}\\s+([a-zA-Z_]\\w*)\\s*\\[\\s*(\\d+)\\s*\\]\\s*;`, 'g'), 'let $1 = new Array($2).fill(0);');
       js = js.replace(/\bString\s+([a-zA-Z_]\w*)\s*\[\s*\d*\s*\]\s*=\s*\{([^}]*)\}\s*;/g, 'let $1 = [$2];');
       js = js.replace(/\bString\s+([a-zA-Z_]\w*)\s*\[\s*(\d+)\s*\]\s*;/g, 'let $1 = new Array($2).fill("");');
 
-      // 7. C++ variable declarations (preserves if, else if, else, &&, ||, !)
-      js = js.replace(/\bString\s+([a-zA-Z_]\w*)\s*;/g, 'let $1 = "";');
-      js = js.replace(/\bString\s+(?=[a-zA-Z_]\w*\s*(?:=|,))/g, 'let ');
-      js = js.replace(new RegExp(`\\b${varTypes}\\s+([a-zA-Z_]\\w*)\\s*;`, 'g'), 'let $1 = 0;');
-      js = js.replace(new RegExp(`\\b${varTypes}\\s+(?=[a-zA-Z_]\\w*\\s*(?:=|,))`, 'g'), 'let ');
+      // 9. C++ variable declarations (supports `for (int i = 0; ...)`, `int a, b = 2, c;`, `String s;`)
+      js = js.replace(new RegExp(`\\bfor\\s*\\(\\s*${varTypes}\\s+`, 'g'), 'for (let ');
+      js = js.replace(/\b(?:const\s+|static\s+)?String\s+([a-zA-Z_]\w*(?:\s*=\s*[^;]+)?)\s*;/g, (_, declList) => {
+        const items = splitTopLevelCommas(declList).map(item => {
+          const t = item.trim();
+          return t.includes('=') ? t : `${t} = ""`;
+        });
+        return `let ${items.join(', ')};`;
+      });
+      js = js.replace(new RegExp(`\\b${varTypes}\\s+([a-zA-Z_]\\w*(?:\\s*=\\s*[^;]+)?)\\s*;`, 'g'), (_, declList) => {
+        const items = splitTopLevelCommas(declList).map(item => {
+          const t = item.trim();
+          return t.includes('=') ? t : `${t} = 0`;
+        });
+        return `let ${items.join(', ')};`;
+      });
 
-      // 8. C++ type casts: (int)x, (float)x, (bool)x
-      js = js.replace(/\(\s*(?:unsigned\s+)?(?:int|long|short|byte|uint8_t|uint16_t|uint32_t|float|double|bool|boolean|char)\s*\)/g, '');
+      // 10. C++ type casts & Arduino String `.length()`
+      js = js.replace(/\(\s*(?:unsigned\s+)?(?:int|long|short|byte|uint8_t|uint16_t|uint32_t)\s*\)\s*([a-zA-Z0-9_.()]+)/g, 'Math.trunc($1)');
+      js = js.replace(/\(\s*(?:unsigned\s+)?(?:float|double|bool|boolean|char)\s*\)/g, '');
+      js = js.replace(/\b(?:int|long)\s*\(([^()]+)\)/g, 'Math.trunc($1)');
+      js = js.replace(/\b(?:float|double)\s*\(([^()]+)\)/g, 'Number($1)');
+      js = js.replace(/\.length\s*\(\s*\)/g, '.length');
 
-      // 9. Delay functions
+      // 11. Delay functions
       js = js.replace(/\bdelay\s*\(/g, 'await __delay(');
       js = js.replace(/\bdelayMicroseconds\s*\(/g, 'await __delayMicro(');
 
-      // 10. Non-blocking loop protection (handles both `for (;;);` and `while (...) { ... }`)
+      // 12. Non-blocking loop protection (handles `for (;;);`, `while (cond);`, and nested parens in `while`/`for`)
       js = js.replace(/\bfor\s*\(\s*;\s*;\s*\)\s*;/g, 'for (;;) { await __delay(50); }');
-      js = js.replace(/\bwhile\s*\(\s*(?:true|1)\s*\)\s*;/g, 'while (true) { await __delay(50); }');
-      js = js.replace(/\b(while|for)\s*\(([^()]*|\([^()]*\))*\)\s*\{/g, (match) => {
+      js = js.replace(/\bwhile\s*\(((?:[^()]+|\((?:[^()]+|\([^()]*\))*\))*)\)\s*;/g, 'while ($1) { await __delay(25); }');
+      js = js.replace(/\b(while|for)\s*\(((?:[^()]+|\((?:[^()]+|\([^()]*\))*\))*)\)\s*\{/g, (match) => {
         return `${match} if (++__loopGuard % 200 === 0) await __yield();`;
       });
 
@@ -1925,9 +2047,11 @@ void loop() {
       isRunning = true;
       const myToken = ++runToken;
       const startTime = Date.now();
+      serialLineBuffer = '';
       lastLoggedMsg = '';
       lastOledSnapshot = '';
       pinStates = {};
+      pinModes = {};
       oledDrawItems = [];
       oledInverted = false;
       oledDimmed = false;
@@ -1935,6 +2059,14 @@ void loop() {
 
       setRunningButtonsUI(true);
       logSerial('--- เริ่มการทำงาน Arduino UNO ---', 'text-sky-400', true);
+
+      // Arduino String helper methods
+      if (!String.prototype.toInt) {
+        String.prototype.toInt = function () { return parseInt(this, 10) || 0; };
+        String.prototype.toFloat = function () { return parseFloat(this) || 0; };
+        String.prototype.equals = function (other) { return String(this) === String(other); };
+        String.prototype.equalsIgnoreCase = function (other) { return String(this).toLowerCase() === String(other).toLowerCase(); };
+      }
 
       const HIGH = 1, LOW = 0, OUTPUT = 1, INPUT = 0, INPUT_PULLUP = 2;
       const WHITE = 1, BLACK = 0, INVERSE = 2;
@@ -1953,19 +2085,29 @@ void loop() {
         read: () => 0
       };
 
-      const pinMode = () => {};
+      const pinMode = (pin, mode) => {
+        if (myToken !== runToken) return;
+        const unoPin = normalizeUnoPinId(pin);
+        pinModes[unoPin] = mode;
+      };
+
       const digitalWrite = (pin, val) => {
         if (myToken !== runToken) return;
-        pinStates[pin] = val ? 1 : 0;
+        const unoPin = normalizeUnoPinId(pin);
+        pinStates[unoPin] = val ? 1 : 0;
         evaluateCircuit();
       };
+
       const digitalRead = (pin) => readHardwareDigitalPin(pin);
       const analogRead = (pin) => readHardwareAnalogPin(pin);
+
       const analogWrite = (pin, val) => {
         if (myToken !== runToken) return;
-        pinStates[pin] = (Number(val) || 0) > 0 ? 1 : 0;
+        const unoPin = normalizeUnoPinId(pin);
+        pinStates[unoPin] = (Number(val) || 0) > 0 ? 1 : 0;
         evaluateCircuit();
       };
+
       const millis = () => Date.now() - startTime;
       const micros = () => (Date.now() - startTime) * 1000;
       const map = (x, inMin, inMax, outMin, outMax) => (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
@@ -1978,6 +2120,12 @@ void loop() {
       const sin = Math.sin;
       const cos = Math.cos;
       const tan = Math.tan;
+      const bitRead = (val, bit) => (val >> bit) & 1;
+      const bitSet = (val, bit) => val | (1 << bit);
+      const bitClear = (val, bit) => val & ~(1 << bit);
+      const bitWrite = (val, bit, b) => b ? (val | (1 << bit)) : (val & ~(1 << bit));
+      const lowByte = (w) => w & 0xff;
+      const highByte = (w) => (w >> 8) & 0xff;
       const sizeof = (x) => Array.isArray(x) ? x.length : (typeof x === 'string' ? x.length : 1);
       const randomSeed = () => {};
       const random = (a, b) => b === undefined ? Math.floor(Math.random() * a) : Math.floor(Math.random() * (b - a)) + a;
@@ -1990,17 +2138,26 @@ void loop() {
           if (fmt === BIN) return Math.floor(val).toString(2);
           if (fmt === OCT) return Math.floor(val).toString(8);
           if (fmt === DEC) return Math.floor(val).toString(10);
-          if (!Number.isInteger(val)) return val.toFixed(fmt);
+          return val.toFixed(fmt);
         }
         return String(val);
       };
 
       const Serial = {
         begin: () => {},
-        println: (m = '', fmt) => { if (myToken === runToken) logSerial(formatArduinoVal(m, fmt)); },
-        print: (m = '', fmt) => { if (myToken === runToken) logSerial(formatArduinoVal(m, fmt)); },
+        println: (m = '', fmt) => { if (myToken === runToken) appendSerialText(formatArduinoVal(m, fmt), true); },
+        print: (m = '', fmt) => { if (myToken === runToken) appendSerialText(formatArduinoVal(m, fmt), false); },
         available: () => 0,
         read: () => -1
+      };
+
+      const __createServo = () => {
+        let attachedPin = null;
+        return {
+          attach: (p) => { attachedPin = p; },
+          write: (deg) => { if (attachedPin !== null) digitalWrite(attachedPin, Number(deg) > 0 ? 1 : 0); },
+          detach: () => { attachedPin = null; }
+        };
       };
 
       const __createSSD1306 = () => {
@@ -2079,6 +2236,7 @@ void loop() {
           setTextWrap: (w) => {
             textWrap = Boolean(w);
           },
+          setRotation: () => {},
           cp437: () => {},
           width: () => 128,
           height: () => 64,
@@ -2146,6 +2304,9 @@ void loop() {
           fillTriangle: (x0, y0, x1, y1, x2, y2, color = 1) => {
             pending.push({ kind: 'triangle', x0: Number(x0), y0: Number(y0), x1: Number(x1), y1: Number(y1), x2: Number(x2), y2: Number(y2), color, fill: true });
           },
+          drawBitmap: (x, y, bmp, w, h, color = 1) => {
+            pending.push({ kind: 'rect', x: Number(x), y: Number(y), w: Number(w), h: Number(h), color, fill: false });
+          },
           write: (ch) => {
             const str = typeof ch === 'number' ? String.fromCharCode(ch) : String(ch);
             appendText(str, false);
@@ -2196,8 +2357,9 @@ void loop() {
           'A0', 'A1', 'A2', 'A3', 'A4', 'A5',
           'Wire', 'pinMode', 'digitalWrite', 'digitalRead', 'analogRead', 'analogWrite',
           'millis', 'micros', 'map', 'constrain', 'min', 'max', 'abs', 'pow', 'sqrt', 'sin', 'cos', 'tan',
+          'bitRead', 'bitSet', 'bitClear', 'bitWrite', 'lowByte', 'highByte',
           'sizeof', 'randomSeed', 'random', 'tone', 'noTone',
-          'Serial', '__createSSD1306', '__defaultDisplay', '__delay', '__delayMicro', '__yield', '__isAlive',
+          'Serial', '__createServo', '__createSSD1306', '__defaultDisplay', '__delay', '__delayMicro', '__yield', '__isAlive',
           `let __loopGuard = 0;\n${displayDecl}${jsBody}\nreturn (async () => { if (typeof setup === 'function') await setup(); while (__isAlive()) { if (typeof loop === 'function') await loop(); await __delay(25); } })();`
         );
 
@@ -2210,12 +2372,13 @@ void loop() {
           A0, A1, A2, A3, A4, A5,
           Wire, pinMode, digitalWrite, digitalRead, analogRead, analogWrite,
           millis, micros, map, constrain, min, max, abs, pow, sqrt, sin, cos, tan,
+          bitRead, bitSet, bitClear, bitWrite, lowByte, highByte,
           sizeof, randomSeed, random, tone, noTone,
-          Serial, __createSSD1306, defaultDisplay, __delay, __delayMicro, __yield, () => myToken === runToken
+          Serial, __createServo, __createSSD1306, defaultDisplay, __delay, __delayMicro, __yield, () => myToken === runToken
         );
       } catch (err) {
         if (err && err.message !== 'STOPPED') {
-          logSerial(`[Error] ${err.message}`, 'text-rose-400', true);
+          logSerial(`[Error ในโค้ด] ${err.message}`, 'text-rose-400', true);
           stopSimulation();
         }
       }
@@ -2225,6 +2388,7 @@ void loop() {
       runToken++;
       isRunning = false;
       pinStates = {};
+      pinModes = {};
       evaluateCircuit();
       setRunningButtonsUI(false);
       logSerial('--- หยุดการทำงาน ---', 'text-slate-400', true);
