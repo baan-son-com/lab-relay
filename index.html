@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arduino Uno R3 + OLED (6-Line) + LED 5mm + Relay + 12VAC Simulator</title>
+  <title>Arduino Uno R3 + OLED (6-Line) + Dual LED 5mm (Right Resistor) + Dual 12VAC Lamp Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -79,15 +79,7 @@
     }
     .waypoint-handle:hover { r: 6.5; fill: #facc15; }
 
-    @keyframes acFlow {
-      to { stroke-dashoffset: -24; }
-    }
-    .wire-energized-ac {
-      stroke-dasharray: 6 6;
-      animation: acFlow 0.5s linear infinite;
-    }
-
-    #bulb-glow-outer, #bulb-glow-inner, #bulb-filament, #led5mm-glow, #led5mm-dome {
+    .lamp-transition, .led-transition {
       transition: opacity 0.15s ease, filter 0.15s ease, stroke 0.15s ease, fill 0.15s ease;
     }
 
@@ -104,7 +96,7 @@
 </head>
 <body class="h-screen flex flex-col">
 
-  <!-- Compact Top Navigation / Toolbar -->
+  <!-- Top Navigation / Toolbar -->
   <header class="bg-slate-900 border-b border-slate-800 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shadow-lg z-30 shrink-0">
     <div class="flex items-center gap-2.5">
       <div class="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center border border-teal-400/40 shrink-0">
@@ -113,12 +105,18 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-sm font-bold text-white leading-tight">Arduino Uno R3 + OLED (6 บรรทัด) + LED 5mm + 12VAC Simulator</h1>
+        <h1 class="text-sm font-bold text-white leading-tight">Arduino Uno R3 + OLED (6 บรรทัด) + 2×LED 5mm (R220Ω ด้านขวา) + 2×12VAC Lamp Simulator</h1>
       </div>
     </div>
 
     <!-- Toolbar Actions -->
     <div class="flex flex-wrap items-center gap-1.5">
+      <!-- Quick Run / Stop in Top Bar -->
+      <div class="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 gap-1">
+        <button id="topBtnRun" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded shadow transition">▶ รัน (Run)</button>
+        <button id="topBtnStop" disabled class="px-2 py-1 bg-rose-600/40 text-rose-300/50 cursor-not-allowed text-xs font-bold rounded transition">■ หยุด</button>
+      </div>
+
       <!-- Relay Channel Mode Selector -->
       <div class="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 gap-0.5" title="เลือกจำนวนแชนเนลของโมดูล Relay">
         <span class="text-[11px] text-slate-300 px-1.5 font-medium">Relay:</span>
@@ -147,9 +145,9 @@
         ล้างสายไฟ
       </button>
 
-      <button id="btnToggleCode" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow border border-emerald-400/40 transition flex items-center gap-1">
+      <button id="btnToggleCode" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg shadow border border-slate-500/40 transition flex items-center gap-1">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-        <span id="btnToggleCodeText">เขียนโค้ด</span>
+        <span id="btnToggleCodeText">ซ่อนโค้ด</span>
       </button>
     </div>
   </header>
@@ -166,7 +164,8 @@
           <span id="badge-220v" class="px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">220VAC: OFF</span>
           <span id="badge-12v" class="px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">12VAC: 0V</span>
           <span id="badge-oled" class="px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">OLED: OFF</span>
-          <span id="badge-led5mm" class="px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">LED 5mm: OFF</span>
+          <span id="badge-led5mm1" class="px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">LED1: OFF</span>
+          <span id="badge-led5mm2" class="px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">LED2: OFF</span>
           <span id="badge-relay-pwr" class="px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">Relay: ไม่ครบวงจร</span>
           <span id="badge-loads" class="px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700">โหลด 12VAC: ปิด</span>
         </div>
@@ -175,7 +174,7 @@
         </div>
       </div>
 
-      <!-- Full-fit SVG Canvas Container (No overlap, clean view) -->
+      <!-- Full-fit SVG Canvas Container -->
       <div class="flex-1 flex items-center justify-center p-2 overflow-hidden bg-[#0f172a]">
         <div class="w-full h-full flex items-center justify-center">
           <svg id="circuitCanvas" viewBox="0 0 1440 820" preserveAspectRatio="xMidYMid meet" class="max-w-full max-h-full w-auto h-auto rounded-xl shadow-2xl border border-slate-700/80 bg-[#f8fafc] select-none">
@@ -214,6 +213,11 @@
                 <stop offset="45%" stop-color="#22c55e" stop-opacity="0.55" />
                 <stop offset="100%" stop-color="#22c55e" stop-opacity="0" />
               </radialGradient>
+              <radialGradient id="ledRedGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fca5a5" stop-opacity="0.95" />
+                <stop offset="45%" stop-color="#ef4444" stop-opacity="0.6" />
+                <stop offset="100%" stop-color="#ef4444" stop-opacity="0" />
+              </radialGradient>
               <filter id="dropShadow" x="-10%" y="-10%" width="125%" height="125%">
                 <feDropShadow dx="2" dy="3" stdDeviation="3.5" flood-color="#0f172a" flood-opacity="0.22" />
               </filter>
@@ -224,56 +228,102 @@
 
             <!-- Zone Dividers & Labels -->
             <rect x="16" y="16" width="464" height="788" rx="12" fill="#0ea5e9" fill-opacity="0.04" stroke="#0284c7" stroke-opacity="0.28" stroke-dasharray="6 4" />
-            <text x="32" y="38" font-size="12.5" font-weight="bold" fill="#0369a1">ฝั่งควบคุมแรงดันต่ำ (5V DC CONTROL, OLED 6-LINE, LED 5mm &amp; SENSORS)</text>
+            <text x="32" y="38" font-size="12" font-weight="bold" fill="#0369a1">ฝั่งควบคุมแรงดันต่ำ (5V DC CONTROL, OLED 6-LINE, 2×LED 5mm &amp; SENSORS)</text>
 
             <rect x="496" y="16" width="928" height="788" rx="12" fill="#f59e0b" fill-opacity="0.05" stroke="#d97706" stroke-opacity="0.3" stroke-dasharray="6 4" />
-            <text x="514" y="38" font-size="12.5" font-weight="bold" fill="#b45309">ฝั่งกำลังไฟฟ้ากระแสสลับ (RELAY MODULE, 220VAC/12VAC &amp; 12VAC LOADS)</text>
+            <text x="514" y="38" font-size="12" font-weight="bold" fill="#b45309">ฝั่งกำลังไฟฟ้ากระแสสลับ (RELAY MODULE, 220VAC/12VAC &amp; 12VAC LOADS)</text>
 
-           <!-- =========================================================================
-                 0. OLED 0.96" I2C DISPLAY (128x64 Pixel Accurate)
+            <!-- =========================================================================
+                 0. OLED 0.96" I2C DISPLAY (6-Line Layout)
                  ========================================================================= -->
-            <g id="oled-display" transform="translate(36, 56)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="270" height="150" rx="8" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2.5" />
+            <g id="oled-display" transform="translate(28, 52)" filter="url(#dropShadow)">
+              <rect x="0" y="0" width="242" height="156" rx="8" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2.5" />
               <!-- Mounting Holes -->
-              <circle cx="11" cy="11" r="3.5" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
-              <circle cx="259" cy="11" r="3.5" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
-              <circle cx="11" cy="139" r="3.5" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
-              <circle cx="259" cy="139" r="3.5" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
+              <circle cx="10" cy="10" r="3.2" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
+              <circle cx="232" cy="10" r="3.2" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
+              <circle cx="10" cy="146" r="3.2" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
+              <circle cx="232" cy="146" r="3.2" fill="#f8fafc" stroke="#93c5fd" stroke-width="1.5" />
 
-              <!-- OLED Screen (128x64 viewBox สัดส่วนเหมือนจอจริง) -->
-              <rect x="20" y="12" width="230" height="100" rx="4" fill="#050914" stroke="#334155" stroke-width="2" />
-              <svg id="oled-screen-svg" x="26" y="15" width="218" height="94" viewBox="0 0 128 64" preserveAspectRatio="none"></svg>
+              <!-- OLED Screen Frame -->
+              <rect x="14" y="10" width="214" height="108" rx="4" fill="#020617" stroke="#334155" stroke-width="2" />
+              <svg id="oled-screen-svg" x="18" y="14" width="206" height="100" viewBox="0 0 256 128" preserveAspectRatio="xMidYMid meet"></svg>
 
               <!-- I2C Header -->
-              <rect x="65" y="122" width="140" height="22" rx="3" fill="#0f172a" />
-              <text x="85" y="120" font-size="8" font-weight="bold" fill="#fca5a5" text-anchor="middle">VCC</text>
-              <text x="118" y="120" font-size="8" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
-              <text x="152" y="120" font-size="8" font-weight="bold" fill="#fde047" text-anchor="middle">SCL</text>
-              <text x="185" y="120" font-size="8" font-weight="bold" fill="#86efac" text-anchor="middle">SDA</text>
+              <rect x="51" y="128" width="140" height="22" rx="3" fill="#0f172a" />
+              <text x="71" y="126" font-size="8" font-weight="bold" fill="#fca5a5" text-anchor="middle">VCC</text>
+              <text x="104" y="126" font-size="8" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
+              <text x="138" y="126" font-size="8" font-weight="bold" fill="#fde047" text-anchor="middle">SCL</text>
+              <text x="171" y="126" font-size="8" font-weight="bold" fill="#86efac" text-anchor="middle">SDA</text>
             </g>
-            
+
             <!-- =========================================================================
-                 1. หลอด LED 5mm (5V DC พร้อมตัวต้านทานในตัว - โซนไฟต่ำ)
+                 1A. หลอด LED 5mm #1 (สีเขียว - ตัวต้านทาน 220Ω อยู่ด้านขวา ขา - / ซ้ายไม่มีตัวต้านทาน)
                  ========================================================================= -->
-            <g id="led-5mm-module" transform="translate(332, 56)" filter="url(#dropShadow)">
-              <rect x="0" y="0" width="128" height="150" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="2" />
-              <text x="64" y="19" font-size="10.5" font-weight="bold" fill="#86efac" text-anchor="middle">LED 5mm (5V DC)</text>
-              <text x="64" y="31" font-size="8" fill="#94a3b8" text-anchor="middle">Built-in 220Ω</text>
+            <g id="led-5mm-1" transform="translate(278, 52)" filter="url(#dropShadow)">
+              <rect x="0" y="0" width="92" height="156" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="2" />
+              <text x="46" y="16" font-size="9.5" font-weight="bold" fill="#86efac" text-anchor="middle">LED 5mm #1</text>
+              <text x="46" y="27" font-size="7.5" fill="#94a3b8" text-anchor="middle">R 220Ω ด้านขวา (-)</text>
 
               <!-- Glow Effect -->
-              <circle id="led5mm-glow" cx="64" cy="68" r="36" fill="url(#ledGreenGlow)" opacity="0" pointer-events="none" />
+              <circle id="led1-glow" class="led-transition" cx="46" cy="56" r="28" fill="url(#ledGreenGlow)" opacity="0" pointer-events="none" />
 
               <!-- 5mm LED Dome -->
-              <path id="led5mm-dome" d="M 48 84 V 62 A 16 16 0 0 1 80 62 V 84 Z" fill="#14532d" stroke="#86efac" stroke-width="2" />
-              <rect x="44" y="84" width="40" height="6" rx="2" fill="#166534" stroke="#86efac" stroke-width="1.2" />
-              <!-- Legs -->
-              <line x1="54" y1="90" x2="54" y2="112" stroke="#cbd5e1" stroke-width="2.5" />
-              <line x1="74" y1="90" x2="74" y2="112" stroke="#94a3b8" stroke-width="2.5" />
+              <path id="led1-dome" class="led-transition" d="M 33 70 V 52 A 13 13 0 0 1 59 52 V 70 Z" fill="#14532d" stroke="#86efac" stroke-width="1.8" />
+              <rect x="30" y="70" width="32" height="5" rx="1.5" fill="#166534" stroke="#86efac" stroke-width="1" />
+
+              <!-- Leg + (ด้านซ้าย: ต่อตรง ไม่มีตัวต้านทาน) -->
+              <line x1="36" y1="75" x2="36" y2="128" stroke="#cbd5e1" stroke-width="2" />
+
+              <!-- Leg - (ด้านขวา: ต่ออนุกรมตัวต้านทาน 220Ω) -->
+              <line x1="58" y1="75" x2="58" y2="83" stroke="#94a3b8" stroke-width="2" />
+              <!-- Resistor 220Ω (Red-Red-Brown-Gold) -->
+              <rect x="53" y="83" width="10" height="24" rx="2.5" fill="#e6c28b" stroke="#92400e" stroke-width="1" />
+              <rect x="53" y="87" width="10" height="2.8" fill="#dc2626" />
+              <rect x="53" y="92" width="10" height="2.8" fill="#dc2626" />
+              <rect x="53" y="97" width="10" height="2.8" fill="#78350f" />
+              <rect x="53" y="102" width="10" height="2.2" fill="#eab308" />
+              <text x="77" y="98" font-size="7" font-weight="bold" fill="#fde047" text-anchor="middle">220Ω</text>
+              <line x1="58" y1="107" x2="58" y2="128" stroke="#94a3b8" stroke-width="2" />
 
               <!-- Pin Header -->
-              <rect x="24" y="122" width="80" height="22" rx="3" fill="#0f172a" />
-              <text x="46" y="119" font-size="8.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">+ (IN)</text>
-              <text x="82" y="119" font-size="8.5" font-weight="bold" fill="#cbd5e1" text-anchor="middle">- (GND)</text>
+              <rect x="16" y="128" width="60" height="22" rx="3" fill="#0f172a" />
+              <text x="36" y="125" font-size="8" font-weight="bold" fill="#fca5a5" text-anchor="middle">+</text>
+              <text x="58" y="125" font-size="8" font-weight="bold" fill="#cbd5e1" text-anchor="middle">-</text>
+            </g>
+
+            <!-- =========================================================================
+                 1B. หลอด LED 5mm #2 (สีแดง - ตัวต้านทาน 220Ω อยู่ด้านขวา ขา - / ซ้ายไม่มีตัวต้านทาน)
+                 ========================================================================= -->
+            <g id="led-5mm-2" transform="translate(378, 52)" filter="url(#dropShadow)">
+              <rect x="0" y="0" width="92" height="156" rx="8" fill="#1e293b" stroke="#ef4444" stroke-width="2" />
+              <text x="46" y="16" font-size="9.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">LED 5mm #2</text>
+              <text x="46" y="27" font-size="7.5" fill="#94a3b8" text-anchor="middle">R 220Ω ด้านขวา (-)</text>
+
+              <!-- Glow Effect -->
+              <circle id="led2-glow" class="led-transition" cx="46" cy="56" r="28" fill="url(#ledRedGlow)" opacity="0" pointer-events="none" />
+
+              <!-- 5mm LED Dome -->
+              <path id="led2-dome" class="led-transition" d="M 33 70 V 52 A 13 13 0 0 1 59 52 V 70 Z" fill="#7f1d1d" stroke="#fca5a5" stroke-width="1.8" />
+              <rect x="30" y="70" width="32" height="5" rx="1.5" fill="#991b1b" stroke="#fca5a5" stroke-width="1" />
+
+              <!-- Leg + (ด้านซ้าย: ต่อตรง ไม่มีตัวต้านทาน) -->
+              <line x1="36" y1="75" x2="36" y2="128" stroke="#cbd5e1" stroke-width="2" />
+
+              <!-- Leg - (ด้านขวา: ต่ออนุกรมตัวต้านทาน 220Ω) -->
+              <line x1="58" y1="75" x2="58" y2="83" stroke="#94a3b8" stroke-width="2" />
+              <!-- Resistor 220Ω (Red-Red-Brown-Gold) -->
+              <rect x="53" y="83" width="10" height="24" rx="2.5" fill="#e6c28b" stroke="#92400e" stroke-width="1" />
+              <rect x="53" y="87" width="10" height="2.8" fill="#dc2626" />
+              <rect x="53" y="92" width="10" height="2.8" fill="#dc2626" />
+              <rect x="53" y="97" width="10" height="2.8" fill="#78350f" />
+              <rect x="53" y="102" width="10" height="2.2" fill="#eab308" />
+              <text x="77" y="98" font-size="7" font-weight="bold" fill="#fde047" text-anchor="middle">220Ω</text>
+              <line x1="58" y1="107" x2="58" y2="128" stroke="#94a3b8" stroke-width="2" />
+
+              <!-- Pin Header -->
+              <rect x="16" y="128" width="60" height="22" rx="3" fill="#0f172a" />
+              <text x="36" y="125" font-size="8" font-weight="bold" fill="#fca5a5" text-anchor="middle">+</text>
+              <text x="58" y="125" font-size="8" font-weight="bold" fill="#cbd5e1" text-anchor="middle">-</text>
             </g>
 
             <!-- =========================================================================
@@ -437,11 +487,11 @@
             </g>
 
             <!-- =========================================================================
-                 6. หลอดไฟ 12VAC #1 (จัดวางโล่ง ชัดเจน)
+                 6A. หลอดไฟ LED 12VAC #1
                  ========================================================================= -->
-            <g id="lamp-12vac" transform="translate(915, 75)" filter="url(#dropShadow)">
+            <g id="lamp-12vac" transform="translate(915, 58)" filter="url(#dropShadow)">
               <rect x="10" y="195" width="160" height="114" rx="10" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
-              <text x="90" y="216" font-size="11" font-weight="bold" fill="#fde047" text-anchor="middle">หลอดไฟ 12VAC #1</text>
+              <text x="90" y="216" font-size="11" font-weight="bold" fill="#fde047" text-anchor="middle">หลอดไฟ LED 12VAC #1</text>
 
               <rect x="30" y="228" width="120" height="58" rx="6" fill="#0f172a" stroke="#64748b" stroke-width="1.5" />
               <text x="58" y="245" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">ขั้ว 1 (L1)</text>
@@ -452,18 +502,49 @@
               <line x1="64" y1="174" x2="116" y2="174" stroke="#64748b" stroke-width="2" />
               <line x1="64" y1="185" x2="116" y2="185" stroke="#64748b" stroke-width="2" />
 
-              <circle id="bulb-glow-outer" cx="90" cy="85" r="90" fill="url(#bulbLightGlow)" opacity="0" pointer-events="none" />
+              <circle id="bulb1-glow-outer" class="lamp-transition" cx="90" cy="85" r="88" fill="url(#bulbLightGlow)" opacity="0" pointer-events="none" />
 
               <path
                 d="M 66 152 C 66 132, 42 115, 42 82 A 48 48 0 1 1 138 82 C 138 115, 114 132, 114 152 Z"
                 fill="url(#bulbGlassGrad)" stroke="#94a3b8" stroke-width="2.2"
               />
-              <circle id="bulb-glow-inner" cx="90" cy="82" r="36" fill="#fef08a" opacity="0" pointer-events="none" />
+              <circle id="bulb1-glow-inner" class="lamp-transition" cx="90" cy="82" r="36" fill="#fef08a" opacity="0" pointer-events="none" />
 
               <path d="M 83 152 L 85 112 H 95 L 97 152" fill="none" stroke="#cbd5e1" stroke-width="2" />
               <line x1="85" y1="112" x2="77" y2="85" stroke="#64748b" stroke-width="1.5" />
               <line x1="95" y1="112" x2="103" y2="85" stroke="#64748b" stroke-width="1.5" />
-              <path id="bulb-filament" d="M 77 85 Q 81 72 84 85 Q 87 72 90 85 Q 93 72 96 85 Q 100 72 103 85" fill="none" stroke="#475569" stroke-width="2.6" stroke-linecap="round" />
+              <path id="bulb1-filament" class="lamp-transition" d="M 77 85 Q 81 72 84 85 Q 87 72 90 85 Q 93 72 96 85 Q 100 72 103 85" fill="none" stroke="#475569" stroke-width="2.6" stroke-linecap="round" />
+              <path d="M 56 68 A 34 34 0 0 1 82 44" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+            </g>
+
+            <!-- =========================================================================
+                 6B. หลอดไฟ LED 12VAC #2
+                 ========================================================================= -->
+            <g id="lamp2-12vac" transform="translate(1175, 58)" filter="url(#dropShadow)">
+              <rect x="10" y="195" width="160" height="114" rx="10" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
+              <text x="90" y="216" font-size="11" font-weight="bold" fill="#fde047" text-anchor="middle">หลอดไฟ LED 12VAC #2</text>
+
+              <rect x="30" y="228" width="120" height="58" rx="6" fill="#0f172a" stroke="#64748b" stroke-width="1.5" />
+              <text x="58" y="245" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">ขั้ว 1 (L1)</text>
+              <text x="122" y="245" font-size="9.5" font-weight="bold" fill="#fde047" text-anchor="middle">ขั้ว 2 (L2)</text>
+
+              <rect x="64" y="152" width="52" height="45" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="2" />
+              <line x1="64" y1="163" x2="116" y2="163" stroke="#64748b" stroke-width="2" />
+              <line x1="64" y1="174" x2="116" y2="174" stroke="#64748b" stroke-width="2" />
+              <line x1="64" y1="185" x2="116" y2="185" stroke="#64748b" stroke-width="2" />
+
+              <circle id="bulb2-glow-outer" class="lamp-transition" cx="90" cy="85" r="88" fill="url(#bulbLightGlow)" opacity="0" pointer-events="none" />
+
+              <path
+                d="M 66 152 C 66 132, 42 115, 42 82 A 48 48 0 1 1 138 82 C 138 115, 114 132, 114 152 Z"
+                fill="url(#bulbGlassGrad)" stroke="#94a3b8" stroke-width="2.2"
+              />
+              <circle id="bulb2-glow-inner" class="lamp-transition" cx="90" cy="82" r="36" fill="#fef08a" opacity="0" pointer-events="none" />
+
+              <path d="M 83 152 L 85 112 H 95 L 97 152" fill="none" stroke="#cbd5e1" stroke-width="2" />
+              <line x1="85" y1="112" x2="77" y2="85" stroke="#64748b" stroke-width="1.5" />
+              <line x1="95" y1="112" x2="103" y2="85" stroke="#64748b" stroke-width="1.5" />
+              <path id="bulb2-filament" class="lamp-transition" d="M 77 85 Q 81 72 84 85 Q 87 72 90 85 Q 93 72 96 85 Q 100 72 103 85" fill="none" stroke="#475569" stroke-width="2.6" stroke-linecap="round" />
               <path d="M 56 68 A 34 34 0 0 1 82 44" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.7" />
             </g>
 
@@ -490,9 +571,9 @@
             </g>
 
             <!-- =========================================================================
-                 8. พัดลม 12VAC #2 (จัดวางคอลัมน์ขวา โล่ง ไม่รก)
+                 8. พัดลม 12VAC #2
                  ========================================================================= -->
-            <g id="fan2-12vac" transform="translate(1175, 290)" filter="url(#dropShadow)">
+            <g id="fan2-12vac" transform="translate(1175, 480)" filter="url(#dropShadow)">
               <rect x="10" y="10" width="160" height="160" rx="14" fill="#1e293b" stroke="#475569" stroke-width="3" />
               <rect x="20" y="20" width="140" height="140" rx="10" fill="#0f172a" stroke="#334155" stroke-width="2" />
               <g id="fan2-blades">
@@ -523,7 +604,7 @@
       <!-- Compact Bottom Diagnostics -->
       <div class="bg-slate-900 border-t border-slate-800 px-3 py-1.5 flex items-center justify-between gap-2 text-xs shrink-0">
         <div id="circuitDiagnosis" class="text-amber-300 font-medium truncate">
-          ⚠️ สถานะวงจร: กด "ต่อวงจรอัตโนมัติ" แล้วคลิกเปิดเบรกเกอร์ 220VAC เพื่อเริ่มใช้งาน
+          ⚠️ สถานะวงจร: กด "ต่อวงจรอัตโนมัติ" คลิกเปิดเบรกเกอร์ 220VAC แล้วกด "▶ รัน (Run)"
         </div>
         <div class="text-slate-400 shrink-0">
           สายไฟ: <span id="wireCount" class="text-white font-bold">0</span> เส้น
@@ -532,12 +613,12 @@
     </section>
 
     <!-- DRAGGABLE SPLIT RESIZER -->
-    <div id="splitResizer" class="hidden" title="ลากซ้าย-ขวาเพื่อปรับขนาด"></div>
+    <div id="splitResizer" class="block" title="ลากซ้าย-ขวาเพื่อปรับขนาด"></div>
 
-    <!-- RIGHT: Collapsible & Resizable Arduino C++ Code Editor -->
-    <aside id="codePane" class="hidden bg-slate-900 flex-col border-l border-slate-800 shrink-0" style="width: 440px;">
+    <!-- RIGHT: Arduino C++ Code Editor (Open by default so Run is immediately accessible) -->
+    <aside id="codePane" class="flex bg-slate-900 flex-col border-l border-slate-800 shrink-0" style="width: 460px;">
       <div class="px-3 py-2 bg-slate-800/95 border-b border-slate-700 flex items-center justify-between gap-2 shrink-0">
-        <span class="px-2 py-0.5 rounded bg-teal-600/30 text-teal-300 border border-teal-500/40 text-xs font-bold code-font">sketch_oled_6line.ino</span>
+        <span class="px-2 py-0.5 rounded bg-teal-600/30 text-teal-300 border border-teal-500/40 text-xs font-bold code-font">smart_logic_control.ino</span>
         <div class="flex items-center gap-1.5">
           <button id="btnRun" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition">▶ รัน (Run)</button>
           <button id="btnStop" disabled class="px-2.5 py-1 bg-rose-600/40 text-rose-300/50 cursor-not-allowed text-xs font-bold rounded-lg transition">■ หยุด</button>
@@ -547,10 +628,10 @@
 
       <!-- Preset Selector -->
       <div class="px-3 py-1.5 bg-slate-950/60 border-b border-slate-800 flex flex-wrap items-center gap-1.5 text-xs shrink-0">
-        <span class="text-slate-400">ตัวอย่าง:</span>
-        <button id="presetBlink" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">OLED 6 บรรทัด + 12VAC</button>
-        <button id="presetMultiCh" class="px-2 py-0.5 rounded bg-teal-900/60 hover:bg-teal-800 text-teal-200 border border-teal-700/60">คุม 2/4-Ch + LED 5mm</button>
-        <button id="presetSensor" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">PIR + LDR อัตโนมัติ</button>
+        <span class="text-slate-400">ตัวอย่างโค้ด:</span>
+        <button id="presetLogic" class="px-2 py-0.5 rounded bg-teal-900/70 hover:bg-teal-800 text-teal-200 border border-teal-600/60">1. if / else if && || !</button>
+        <button id="presetCycle" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">2. สลับไฟอัตโนมัติ (if/else)</button>
+        <button id="presetTruth" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">3. ตารางความจริง && / !</button>
       </div>
 
       <!-- Editor -->
@@ -560,55 +641,117 @@
           id="cppEditor"
           spellcheck="false"
           class="flex-1 p-3 bg-transparent text-emerald-300 code-font text-xs leading-6 focus:outline-none resize-none whitespace-pre overflow-auto"
-        >// ตัวอย่างควบคุม Relay 12VAC + LED 5mm (D12) + OLED 6 บรรทัด
-int relay1 = 7;
-int led5mm = 12;
+        >// ระบบควบคุมอัจฉริยะด้วยเงื่อนไข if / else if / else และ && / || / !
+// หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้าย (+) ต่อตรง, ขาขวา (-) ผ่าน R 220Ω ลง GND
+int pir1Pin = 2;    // PIR Sensor #1 (D2)
+int pir2Pin = 10;   // PIR Sensor #2 (D10)
+int ldrPin  = 3;    // LDR Module DO (D3: HIGH=มืด, LOW=สว่าง)
+int relay1  = 7;    // Relay CH1 -> หลอดไฟ 12VAC #1
+int relay2  = 6;    // Relay CH2 -> หลอดไฟ 12VAC #2
+int led1    = 12;   // LED 5mm #1 (สีเขียว)
+int led2    = 11;   // LED 5mm #2 (สีแดง)
 
 void setup() {
   Serial.begin(9600);
+  pinMode(pir1Pin, INPUT);
+  pinMode(pir2Pin, INPUT);
+  pinMode(ldrPin, INPUT);
   pinMode(relay1, OUTPUT);
-  pinMode(led5mm, OUTPUT);
+  pinMode(relay2, OUTPUT);
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
 
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.println("=== SMART CONTROL ===");
-  display.println("Board : Arduino UNO");
-  display.println("OLED  : 6-Line Mode");
-  display.println("LED   : 5mm (5V DC)");
-  display.println("Relay : 12VAC Load");
+  display.println("=== SMART LOGIC ===");
+  display.println("if / else if / else");
+  display.println("Operators: && || !");
+  display.println("LED1:D12 | LED2:D11");
+  display.println("R 220R on Right (-)");
   display.println("Status: READY");
   display.display();
-  Serial.println("System Ready!");
+  Serial.println("System Ready! กดคลิก PIR1, PIR2 หรือ LDR เพื่อทดสอบเงื่อนไข");
 }
 
 void loop() {
-  digitalWrite(relay1, HIGH);
-  digitalWrite(led5mm, HIGH);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("=== SYSTEM ACTIVE ===");
-  display.println("Relay CH1 : ON");
-  display.println("12VAC Lamp: ON");
-  display.println("LED 5mm   : ON (5V)");
-  display.println("Mode      : AUTO");
-  display.println("Next      : 2 sec...");
-  display.display();
-  Serial.println("CH1=ON, LED 5mm=ON");
-  delay(2000);
+  bool motion1 = (digitalRead(pir1Pin) == HIGH);
+  bool motion2 = (digitalRead(pir2Pin) == HIGH);
+  bool isDark  = (digitalRead(ldrPin) == HIGH);
 
-  digitalWrite(relay1, LOW);
-  digitalWrite(led5mm, LOW);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("=== SYSTEM STANDBY ===");
-  display.println("Relay CH1 : OFF");
-  display.println("12VAC Lamp: OFF");
-  display.println("LED 5mm   : OFF");
-  display.println("Mode      : AUTO");
-  display.println("Next      : 2 sec...");
-  display.display();
-  Serial.println("CH1=OFF, LED 5mm=OFF");
-  delay(2000);
+  // เงื่อนไข 1 (&&): เวลากลางคืน (isDark) และตรวจพบคนทั้ง 2 จุด (motion1 && motion2)
+  if (isDark && (motion1 && motion2)) {
+    digitalWrite(relay1, HIGH);
+    digitalWrite(relay2, HIGH);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, HIGH);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 1: && FULL ON]");
+    display.println("Dark && PIR1 && PIR2");
+    display.println("Lamp1:ON | Lamp2:ON");
+    display.println("LED1(G):ON LED2(R):ON");
+    display.println("Mode : FULL SECURITY");
+    display.println("isDark&&(m1&&m2)=TRUE");
+    display.display();
+    Serial.println("CASE 1: isDark && (motion1 && motion2) -> ALL ON");
+  }
+  // เงื่อนไข 2 (&& และ ||): เวลากลางคืน (isDark) และตรวจพบคนจุดใดจุดหนึ่ง (motion1 || motion2)
+  else if (isDark && (motion1 || motion2)) {
+    digitalWrite(relay1, HIGH);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, LOW);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 2: && + ||]");
+    display.println("Dark && (PIR1 || PIR2)");
+    display.println("Lamp1:ON | Lamp2:OFF");
+    display.println("LED1(G):ON LED2(R):OFF");
+    display.println("Mode : NIGHT ALERT");
+    display.println("isDark&&(m1||m2)=TRUE");
+    display.display();
+    Serial.println("CASE 2: isDark && (motion1 || motion2) -> LAMP1 & LED1 ON");
+  }
+  // เงื่อนไข 3 (! และ ||): ไม่มืด/กลางวัน (!isDark) แต่มีการเคลื่อนไหว (motion1 || motion2)
+  else if (!isDark && (motion1 || motion2)) {
+    digitalWrite(relay1, LOW);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, LOW);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 3: !isDark ||]");
+    display.println("!Dark && (PIR1 || PIR2)");
+    display.println("Lamp1:OFF | Lamp2:OFF");
+    display.println("LED1(G):ON LED2(R):OFF");
+    display.println("Mode : DAY ALERT ONLY");
+    display.println("!isDark&&(m1||m2)=TRUE");
+    display.display();
+    Serial.println("CASE 3: !isDark && (motion1 || motion2) -> DAY ALERT (LED1 ON)");
+  }
+  // เงื่อนไข 4 (else): กรณีอื่นๆ (ไม่มีการเคลื่อนไหว)
+  else {
+    digitalWrite(relay1, LOW);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, HIGH);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 4: ELSE IDLE]");
+    display.println("No Motion Detected");
+    display.println("Lamp1:OFF | Lamp2:OFF");
+    display.println("LED1(G):OFF LED2(R):ON");
+    display.println("Mode : STANDBY");
+    display.println("Logic: else (Default)");
+    display.display();
+    Serial.println("CASE 4: else -> STANDBY (LED2 RED ON)");
+  }
+
+  delay(300);
 }</textarea>
       </div>
 
@@ -622,7 +765,7 @@ void loop() {
           <button id="btnClearConsole" class="text-[11px] text-slate-400 hover:text-white">ล้างข้อความ</button>
         </div>
         <div id="serialConsole" class="flex-1 p-2 code-font text-xs text-slate-300 overflow-y-auto space-y-1">
-          <div class="text-slate-500">[ระบบ] พร้อมใช้งาน: กด "ต่อวงจรอัตโนมัติ" เปิดเบรกเกอร์ 220VAC แล้วกด "รัน (Run)"</div>
+          <div class="text-slate-500">[ระบบ] พร้อมใช้งาน: กด "ต่อวงจรอัตโนมัติ" เปิดเบรกเกอร์ 220VAC แล้วกด "▶ รัน (Run)"</div>
         </div>
       </div>
     </aside>
@@ -641,7 +784,7 @@ void loop() {
     const cppEditor = document.getElementById('cppEditor');
     const lineNumbers = document.getElementById('lineNumbers');
 
-    let isCodeOpen = false;
+    let isCodeOpen = true;
     function setCodePaneOpen(open) {
       isCodeOpen = open;
       codePane.classList.toggle('hidden', !open);
@@ -687,15 +830,19 @@ void loop() {
     // =========================================================================
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const STATIC_PINS = [
-      // OLED 6-Line (offset: 36, 56)
-      { id: 'OLED_VCC', component: 'OLED', name: 'OLED VCC', x: 36 + 85,  y: 56 + 133, color: '#f87171', type: 'header' },
-      { id: 'OLED_GND', component: 'OLED', name: 'OLED GND', x: 36 + 118, y: 56 + 133, color: '#94a3b8', type: 'header' },
-      { id: 'OLED_SCL', component: 'OLED', name: 'OLED SCL', x: 36 + 152, y: 56 + 133, color: '#fde047', type: 'header' },
-      { id: 'OLED_SDA', component: 'OLED', name: 'OLED SDA', x: 36 + 185, y: 56 + 133, color: '#86efac', type: 'header' },
+      // OLED 6-Line (offset: 28, 52)
+      { id: 'OLED_VCC', component: 'OLED', name: 'OLED VCC', x: 28 + 71,  y: 52 + 139, color: '#f87171', type: 'header' },
+      { id: 'OLED_GND', component: 'OLED', name: 'OLED GND', x: 28 + 104, y: 52 + 139, color: '#94a3b8', type: 'header' },
+      { id: 'OLED_SCL', component: 'OLED', name: 'OLED SCL', x: 28 + 138, y: 52 + 139, color: '#fde047', type: 'header' },
+      { id: 'OLED_SDA', component: 'OLED', name: 'OLED SDA', x: 28 + 171, y: 52 + 139, color: '#86efac', type: 'header' },
 
-      // LED 5mm 5V DC (offset: 332, 56)
-      { id: 'LED5_POS', component: 'LED 5mm', name: 'LED 5mm (+)', x: 332 + 46, y: 56 + 133, color: '#f87171', type: 'header' },
-      { id: 'LED5_NEG', component: 'LED 5mm', name: 'LED 5mm (-)', x: 332 + 82, y: 56 + 133, color: '#94a3b8', type: 'header' },
+      // LED 5mm #1 (offset: 278, 52) -> ซ้าย (+ ตรง), ขวา (- ผ่าน R 220Ω)
+      { id: 'LED1_POS', component: 'LED 5mm #1', name: 'LED1 (+ ด้านซ้าย)',          x: 278 + 36, y: 52 + 139, color: '#f87171', type: 'header' },
+      { id: 'LED1_NEG', component: 'LED 5mm #1', name: 'LED1 (- ด้านขวา R220Ω GND)', x: 278 + 58, y: 52 + 139, color: '#94a3b8', type: 'header' },
+
+      // LED 5mm #2 (offset: 378, 52) -> ซ้าย (+ ตรง), ขวา (- ผ่าน R 220Ω)
+      { id: 'LED2_POS', component: 'LED 5mm #2', name: 'LED2 (+ ด้านซ้าย)',          x: 378 + 36, y: 52 + 139, color: '#f87171', type: 'header' },
+      { id: 'LED2_NEG', component: 'LED 5mm #2', name: 'LED2 (- ด้านขวา R220Ω GND)', x: 378 + 58, y: 52 + 139, color: '#94a3b8', type: 'header' },
 
       // Arduino Uno R3 Top Header (offset: 68, 265)
       { id: 'UNO_D13', component: 'Arduino', name: 'D13', x: 68 + 96,  y: 265 + 24, color: '#fde047', labelPos: 'bottom' },
@@ -743,20 +890,24 @@ void loop() {
       { id: 'AC12_1',  component: '12VAC',  name: '12VAC (AC1)', x: 520 + 275, y: 540 + 114, color: '#fde047', type: 'screw' },
       { id: 'AC12_2',  component: '12VAC',  name: '12VAC (AC2)', x: 520 + 275, y: 540 + 172, color: '#fde047', type: 'screw' },
 
-      // Lamp #1 (offset: 915, 75)
-      { id: 'LAMP_1', component: 'Lamp #1', name: 'หลอดไฟ #1 ขั้ว 1', x: 915 + 58,  y: 75 + 266, color: '#fde047', type: 'screw' },
-      { id: 'LAMP_2', component: 'Lamp #1', name: 'หลอดไฟ #1 ขั้ว 2', x: 915 + 122, y: 75 + 266, color: '#fde047', type: 'screw' },
+      // Lamp #1 (offset: 915, 58)
+      { id: 'LAMP1_1', component: 'Lamp #1', name: 'หลอดไฟ #1 ขั้ว 1', x: 915 + 58,  y: 58 + 266, color: '#fde047', type: 'screw' },
+      { id: 'LAMP1_2', component: 'Lamp #1', name: 'หลอดไฟ #1 ขั้ว 2', x: 915 + 122, y: 58 + 266, color: '#fde047', type: 'screw' },
+
+      // Lamp #2 (offset: 1175, 58)
+      { id: 'LAMP2_1', component: 'Lamp #2', name: 'หลอดไฟ #2 ขั้ว 1', x: 1175 + 58,  y: 58 + 266, color: '#fde047', type: 'screw' },
+      { id: 'LAMP2_2', component: 'Lamp #2', name: 'หลอดไฟ #2 ขั้ว 2', x: 1175 + 122, y: 58 + 266, color: '#fde047', type: 'screw' },
 
       // Fan #1 (offset: 915, 480)
-      { id: 'FAN_1', component: 'Fan #1', name: 'พัดลม #1 ขั้ว 1', x: 915 + 58,  y: 480 + 235, color: '#38bdf8', type: 'screw' },
-      { id: 'FAN_2', component: 'Fan #1', name: 'พัดลม #1 ขั้ว 2', x: 915 + 122, y: 480 + 235, color: '#38bdf8', type: 'screw' },
+      { id: 'FAN1_1', component: 'Fan #1', name: 'พัดลม #1 ขั้ว 1', x: 915 + 58,  y: 480 + 235, color: '#38bdf8', type: 'screw' },
+      { id: 'FAN1_2', component: 'Fan #1', name: 'พัดลม #1 ขั้ว 2', x: 915 + 122, y: 480 + 235, color: '#38bdf8', type: 'screw' },
 
-      // Fan #2 (offset: 1175, 290)
-      { id: 'FAN2_1', component: 'Fan #2', name: 'พัดลม #2 ขั้ว 1', x: 1175 + 58,  y: 290 + 235, color: '#c4b5fd', type: 'screw' },
-      { id: 'FAN2_2', component: 'Fan #2', name: 'พัดลม #2 ขั้ว 2', x: 1175 + 122, y: 290 + 235, color: '#c4b5fd', type: 'screw' }
+      // Fan #2 (offset: 1175, 480)
+      { id: 'FAN2_1', component: 'Fan #2', name: 'พัดลม #2 ขั้ว 1', x: 1175 + 58,  y: 480 + 235, color: '#c4b5fd', type: 'screw' },
+      { id: 'FAN2_2', component: 'Fan #2', name: 'พัดลม #2 ขั้ว 2', x: 1175 + 122, y: 480 + 235, color: '#c4b5fd', type: 'screw' }
     ];
 
-    let relayChannels = 1;
+    let relayChannels = 2; // Default 2-Ch so both 12VAC Lamps can be controlled immediately
     let PINS = [];
     let wires = [];
     let selectedColor = '#ef4444';
@@ -773,7 +924,7 @@ void loop() {
     let isRunning = false;
     let runToken = 0;
 
-    // OLED 128x64 Pixel-Accurate State
+    // OLED Crisp 6-Line State
     let oledDrawItems = [];
     let oledCursorX = 0;
     let oledCursorY = 0;
@@ -785,21 +936,30 @@ void loop() {
       screenSvg.innerHTML = '';
       if (!powered) return;
 
+      const bg = document.createElementNS(SVG_NS, 'rect');
+      bg.setAttribute('x', '0');
+      bg.setAttribute('y', '0');
+      bg.setAttribute('width', '256');
+      bg.setAttribute('height', '128');
+      bg.setAttribute('fill', '#020617');
+      screenSvg.appendChild(bg);
+
       oledDrawItems.forEach(item => {
         const textEl = document.createElementNS(SVG_NS, 'text');
-        const fontSize = 8 * item.size;
-        textEl.setAttribute('x', item.x);
-        // ชดเชย baseline ของ SVG ให้ตรงกับพิกัดมุมซ้ายบน (y) ของ Adafruit_GFX
-        textEl.setAttribute('y', item.y + fontSize - 1);
+        const fontSize = 14 * item.size;
+        const pxX = Math.max(4, item.x * 2 + 4);
+        const pxY = item.y * 2 + fontSize + 2;
+        textEl.setAttribute('x', pxX);
+        textEl.setAttribute('y', pxY);
         textEl.setAttribute('font-size', fontSize);
-        textEl.setAttribute('fill', '#e2e8f0');
+        textEl.setAttribute('fill', item.y < 10 ? '#38bdf8' : '#e2e8f0');
         textEl.setAttribute('class', 'code-font');
+        textEl.setAttribute('letter-spacing', '-0.3');
         textEl.textContent = item.text;
         screenSvg.appendChild(textEl);
       });
     }
-    
-    // OLED 6-Line Buffer
+
     function buildRelayBoard(chCount) {
       relayChannels = chCount;
       const container = document.getElementById('relay-board-container');
@@ -853,15 +1013,15 @@ void loop() {
           <text x="142" y="${cy + boxH - 13}" id="relay-txt-${ch}" font-size="8.5" font-weight="bold" fill="#fef08a" text-anchor="middle">NC${ch}</text>
 
           <rect x="202" y="${cy + 2}" width="84" height="${boxH - 4}" rx="5" fill="#15803d" stroke="#14532d" stroke-width="2" />
-          <text x="224" y="${cy + 18}" font-size="8.5" font-weight="bold" fill="#dcfce7">NO${ch}</text>
-          <text x="224" y="${cy + boxH / 2 + 3}" font-size="8.5" font-weight="bold" fill="#fef08a">COM${ch}</text>
-          <text x="224" y="${cy + boxH - 10}" font-size="8.5" font-weight="bold" fill="#dcfce7">NC${ch}</text>
+          <text x="224" y="${cy + 18}" font-size="8.5" font-weight="bold" fill="#dcfce7" text-anchor="middle">NO${ch}</text>
+          <text x="224" y="${cy + boxH / 2 + 3}" font-size="8.5" font-weight="bold" fill="#fef08a" text-anchor="middle">COM${ch}</text>
+          <text x="224" y="${cy + boxH - 11}" font-size="8.5" font-weight="bold" fill="#dcfce7" text-anchor="middle">NC${ch}</text>
         `;
 
         relayPins.push(
-          { id: `RELAY_NO${ch}`,  component: `Relay CH${ch}`, name: `NO${ch}`,  x: rx + 266, y: ry + cy + 15,          color: '#86efac', type: 'screw' },
-          { id: `RELAY_COM${ch}`, component: `Relay CH${ch}`, name: `COM${ch}`, x: rx + 266, y: ry + cy + boxH / 2,    color: '#fde047', type: 'screw' },
-          { id: `RELAY_NC${ch}`,  component: `Relay CH${ch}`, name: `NC${ch}`,  x: rx + 266, y: ry + cy + boxH - 13,   color: '#93c5fd', type: 'screw' }
+          { id: `RELAY_NO${ch}`,  component: `Relay CH${ch}`, name: `NO${ch}`,  x: rx + 265, y: ry + cy + 16,           color: '#86efac', type: 'screw' },
+          { id: `RELAY_COM${ch}`, component: `Relay CH${ch}`, name: `COM${ch}`, x: rx + 265, y: ry + cy + boxH / 2,     color: '#fde047', type: 'screw' },
+          { id: `RELAY_NC${ch}`,  component: `Relay CH${ch}`, name: `NC${ch}`,  x: rx + 265, y: ry + cy + boxH - 16,    color: '#86efac', type: 'screw' }
         );
       }
 
@@ -869,28 +1029,32 @@ void loop() {
       container.appendChild(g);
 
       PINS = [...STATIC_PINS, ...relayPins];
-      // Filter out wires referencing removed relay pins
       const validIds = new Set(PINS.map(p => p.id));
       wires = wires.filter(w => validIds.has(w.from) && validIds.has(w.to));
+
       renderPins();
       renderWires();
       evaluateCircuit();
     }
 
     // =========================================================================
-    // 3. SVG PIN & WIRE ENGINE
+    // 3. SVG RENDERING (PINS, WIRES, WAYPOINTS)
     // =========================================================================
-    const svg = document.getElementById('circuitCanvas');
+    const canvas = document.getElementById('circuitCanvas');
     const pinsLayer = document.getElementById('pinsLayer');
     const wiresLayer = document.getElementById('wiresLayer');
     const waypointsLayer = document.getElementById('waypointsLayer');
     const previewWire = document.getElementById('previewWire');
 
-    function getSVGPoint(evt) {
-      const pt = svg.createSVGPoint();
+    function getPinById(id) {
+      return PINS.find(p => p.id === id);
+    }
+
+    function getSvgPoint(evt) {
+      const pt = canvas.createSVGPoint();
       pt.x = evt.clientX;
       pt.y = evt.clientY;
-      return pt.matrixTransform(svg.getScreenCTM().inverse());
+      return pt.matrixTransform(canvas.getScreenCTM().inverse());
     }
 
     function renderPins() {
@@ -898,32 +1062,68 @@ void loop() {
       PINS.forEach(pin => {
         const g = document.createElementNS(SVG_NS, 'g');
         g.setAttribute('class', 'pin-node');
-        g.dataset.pinId = pin.id;
+        g.setAttribute('data-pin-id', pin.id);
 
-        const r = pin.type === 'screw' ? 7 : 5.5;
-        let inner = `<circle class="pin-hit" cx="${pin.x}" cy="${pin.y}" r="${r + 4}" fill="transparent" />`;
         if (pin.type === 'screw') {
-          inner += `<circle cx="${pin.x}" cy="${pin.y}" r="${r}" fill="#cbd5e1" stroke="#334155" stroke-width="1.8" />
-                    <line x1="${pin.x - 4}" y1="${pin.y - 4}" x2="${pin.x + 4}" y2="${pin.y + 4}" stroke="#475569" stroke-width="1.5" />`;
+          const outer = document.createElementNS(SVG_NS, 'circle');
+          outer.setAttribute('cx', pin.x);
+          outer.setAttribute('cy', pin.y);
+          outer.setAttribute('r', '7');
+          outer.setAttribute('fill', '#cbd5e1');
+          outer.setAttribute('stroke', '#334155');
+          outer.setAttribute('stroke-width', '1.8');
+          g.appendChild(outer);
+
+          const slot = document.createElementNS(SVG_NS, 'line');
+          slot.setAttribute('x1', pin.x - 4);
+          slot.setAttribute('y1', pin.y - 4);
+          slot.setAttribute('x2', pin.x + 4);
+          slot.setAttribute('y2', pin.y + 4);
+          slot.setAttribute('stroke', '#475569');
+          slot.setAttribute('stroke-width', '1.5');
+          g.appendChild(slot);
         } else {
-          inner += `<circle cx="${pin.x}" cy="${pin.y}" r="${r}" fill="${pin.color}" stroke="#0f172a" stroke-width="1.5" />`;
+          const rect = document.createElementNS(SVG_NS, 'rect');
+          rect.setAttribute('x', pin.x - 4.5);
+          rect.setAttribute('y', pin.y - 4.5);
+          rect.setAttribute('width', '9');
+          rect.setAttribute('height', '9');
+          rect.setAttribute('rx', '1.5');
+          rect.setAttribute('fill', '#1e293b');
+          rect.setAttribute('stroke', pin.color);
+          rect.setAttribute('stroke-width', '1.8');
+          g.appendChild(rect);
         }
 
-        if (pin.labelPos === 'bottom') {
-          inner += `<text x="${pin.x}" y="${pin.y + 18}" font-size="7.5" font-weight="bold" fill="#ffffff" text-anchor="middle">${pin.name}</text>`;
-        } else if (pin.labelPos === 'top') {
-          inner += `<text x="${pin.x}" y="${pin.y - 11}" font-size="7.5" font-weight="bold" fill="#ffffff" text-anchor="middle">${pin.name}</text>`;
+        const hit = document.createElementNS(SVG_NS, 'circle');
+        hit.setAttribute('class', 'pin-hit');
+        hit.setAttribute('cx', pin.x);
+        hit.setAttribute('cy', pin.y);
+        hit.setAttribute('r', '9');
+        hit.setAttribute('fill', 'transparent');
+        g.appendChild(hit);
+
+        if (pin.labelPos) {
+          const lbl = document.createElementNS(SVG_NS, 'text');
+          lbl.setAttribute('x', pin.x);
+          lbl.setAttribute('y', pin.labelPos === 'bottom' ? pin.y + 18 : pin.y - 12);
+          lbl.setAttribute('font-size', '7.5');
+          lbl.setAttribute('font-weight', 'bold');
+          lbl.setAttribute('fill', '#ffffff');
+          lbl.setAttribute('text-anchor', 'middle');
+          lbl.textContent = pin.name;
+          g.appendChild(lbl);
         }
 
         const title = document.createElementNS(SVG_NS, 'title');
         title.textContent = `${pin.component}: ${pin.name}`;
-        g.innerHTML = inner;
         g.appendChild(title);
 
         g.addEventListener('click', (e) => {
           e.stopPropagation();
           handlePinClick(pin);
         });
+
         pinsLayer.appendChild(g);
       });
     }
@@ -932,73 +1132,68 @@ void loop() {
       if (!activeStartPin) {
         activeStartPin = pin;
         activeWaypoints = [];
-        document.querySelectorAll('.pin-node').forEach(el => el.classList.remove('pin-selected'));
-        const node = pinsLayer.querySelector(`[data-pin-id="${pin.id}"]`);
-        if (node) node.classList.add('pin-selected');
-        previewWire.setAttribute('stroke', selectedColor);
-        previewWire.setAttribute('opacity', '0.85');
+        highlightSelectedPin(pin.id);
       } else {
-        if (activeStartPin.id !== pin.id) {
-          wires.push({
-            id: 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-            from: activeStartPin.id,
-            to: pin.id,
-            color: selectedColor,
-            waypoints: [...activeWaypoints]
-          });
+        if (activeStartPin.id === pin.id) {
+          cancelWireDrawing();
+          return;
         }
-        cancelDrawing();
+        wires.push({
+          id: 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          from: activeStartPin.id,
+          to: pin.id,
+          color: selectedColor,
+          waypoints: [...activeWaypoints]
+        });
+        cancelWireDrawing();
         renderWires();
         evaluateCircuit();
       }
     }
 
-    function cancelDrawing() {
+    function highlightSelectedPin(pinId) {
+      document.querySelectorAll('.pin-node').forEach(el => {
+        el.classList.toggle('pin-selected', el.getAttribute('data-pin-id') === pinId);
+      });
+    }
+
+    function cancelWireDrawing() {
       activeStartPin = null;
       activeWaypoints = [];
+      highlightSelectedPin(null);
       previewWire.setAttribute('opacity', '0');
-      previewWire.setAttribute('d', '');
-      document.querySelectorAll('.pin-node').forEach(el => el.classList.remove('pin-selected'));
     }
 
-    svg.addEventListener('click', (e) => {
-      if (!activeStartPin) return;
-      const pt = getSVGPoint(e);
-      activeWaypoints.push({ x: Math.round(pt.x), y: Math.round(pt.y) });
-      updatePreviewWire(pt);
-    });
-
-    svg.addEventListener('mousemove', (e) => {
-      const pt = getSVGPoint(e);
-      if (draggingWaypoint) {
-        draggingWaypoint.wire.waypoints[draggingWaypoint.index] = { x: Math.round(pt.x), y: Math.round(pt.y) };
-        renderWires();
-        return;
+    function buildWirePathD(p1, p2, waypoints) {
+      let d = `M ${p1.x} ${p1.y}`;
+      if (waypoints && waypoints.length) {
+        waypoints.forEach(wp => { d += ` L ${wp.x} ${wp.y}`; });
       }
-      if (activeStartPin) updatePreviewWire(pt);
-    });
-
-    window.addEventListener('mouseup', () => { draggingWaypoint = null; });
-    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelDrawing(); });
-
-    function updatePreviewWire(mousePt) {
-      const pts = [{ x: activeStartPin.x, y: activeStartPin.y }, ...activeWaypoints, mousePt];
-      previewWire.setAttribute('d', pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' '));
+      d += ` L ${p2.x} ${p2.y}`;
+      return d;
     }
-
-    function getPinById(id) { return PINS.find(p => p.id === id); }
 
     function renderWires() {
       wiresLayer.innerHTML = '';
       waypointsLayer.innerHTML = '';
+      document.getElementById('wireCount').textContent = wires.length;
 
-      wires.forEach(w => {
+      wires.forEach((w, wIdx) => {
         const p1 = getPinById(w.from);
         const p2 = getPinById(w.to);
         if (!p1 || !p2) return;
 
-        const pts = [{ x: p1.x, y: p1.y }, ...(w.waypoints || []), { x: p2.x, y: p2.y }];
-        const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+        const d = buildWirePathD(p1, p2, w.waypoints);
+
+        const outline = document.createElementNS(SVG_NS, 'path');
+        outline.setAttribute('d', d);
+        outline.setAttribute('fill', 'none');
+        outline.setAttribute('stroke', '#0f172a');
+        outline.setAttribute('stroke-width', '5.5');
+        outline.setAttribute('stroke-linecap', 'round');
+        outline.setAttribute('stroke-linejoin', 'round');
+        outline.setAttribute('opacity', '0.45');
+        wiresLayer.appendChild(outline);
 
         const path = document.createElementNS(SVG_NS, 'path');
         path.setAttribute('d', d);
@@ -1008,217 +1203,276 @@ void loop() {
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('class', 'wire-path');
-        path.dataset.wireId = w.id;
+        path.setAttribute('data-wire-id', w.id);
 
         const title = document.createElementNS(SVG_NS, 'title');
-        title.textContent = `${p1.name} ↔ ${p2.name} (คลิกเพื่อลบ)`;
+        title.textContent = `${p1.name} ↔ ${p2.name} (คลิกเพื่อลบสายไฟ)`;
         path.appendChild(title);
 
         path.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (activeStartPin) return;
-          wires = wires.filter(item => item.id !== w.id);
+          wires.splice(wIdx, 1);
           renderWires();
           evaluateCircuit();
         });
         wiresLayer.appendChild(path);
 
-        (w.waypoints || []).forEach((wp, idx) => {
-          const c = document.createElementNS(SVG_NS, 'circle');
-          c.setAttribute('cx', wp.x);
-          c.setAttribute('cy', wp.y);
-          c.setAttribute('r', '4.2');
-          c.setAttribute('fill', '#ffffff');
-          c.setAttribute('stroke', w.color);
-          c.setAttribute('stroke-width', '2');
-          c.setAttribute('class', 'waypoint-handle');
-          c.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            draggingWaypoint = { wire: w, index: idx };
+        if (w.waypoints) {
+          w.waypoints.forEach((wp, wpIdx) => {
+            const handle = document.createElementNS(SVG_NS, 'circle');
+            handle.setAttribute('cx', wp.x);
+            handle.setAttribute('cy', wp.y);
+            handle.setAttribute('r', '4.2');
+            handle.setAttribute('fill', '#ffffff');
+            handle.setAttribute('stroke', w.color);
+            handle.setAttribute('stroke-width', '2');
+            handle.setAttribute('class', 'waypoint-handle');
+            handle.addEventListener('mousedown', (e) => {
+              e.stopPropagation();
+              draggingWaypoint = { wire: w, wpIdx };
+            });
+            waypointsLayer.appendChild(handle);
           });
-          c.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            w.waypoints.splice(idx, 1);
-            renderWires();
-          });
-          waypointsLayer.appendChild(c);
-        });
+        }
       });
-
-      document.getElementById('wireCount').textContent = wires.length;
     }
 
+    canvas.addEventListener('mousemove', (e) => {
+      const pt = getSvgPoint(e);
+      if (draggingWaypoint) {
+        draggingWaypoint.wire.waypoints[draggingWaypoint.wpIdx] = { x: Math.round(pt.x), y: Math.round(pt.y) };
+        renderWires();
+        return;
+      }
+      if (activeStartPin) {
+        const d = buildWirePathD(activeStartPin, pt, activeWaypoints);
+        previewWire.setAttribute('d', d);
+        previewWire.setAttribute('stroke', selectedColor);
+        previewWire.setAttribute('opacity', '0.85');
+      }
+    });
+
+    canvas.addEventListener('click', (e) => {
+      if (draggingWaypoint) return;
+      if (activeStartPin) {
+        const pt = getSvgPoint(e);
+        activeWaypoints.push({ x: Math.round(pt.x), y: Math.round(pt.y) });
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      draggingWaypoint = null;
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cancelWireDrawing();
+    });
+
     // =========================================================================
-    // 4. ELECTRICAL CIRCUIT EVALUATOR
+    // 4. CIRCUIT GRAPH & EVALUATION
     // =========================================================================
     function buildAdjacency() {
       const adj = {};
-      PINS.forEach(p => { adj[p.id] = new Set(); });
-      wires.forEach(w => {
-        if (adj[w.from] && adj[w.to]) {
-          adj[w.from].add(w.to);
-          adj[w.to].add(w.from);
+      const addEdge = (a, b) => {
+        if (!adj[a]) adj[a] = new Set();
+        if (!adj[b]) adj[b] = new Set();
+        adj[a].add(b);
+        adj[b].add(a);
+      };
+
+      // Internal Arduino GND rails
+      addEdge('UNO_GND_TOP', 'UNO_GND1');
+      addEdge('UNO_GND1', 'UNO_GND2');
+
+      // User wires
+      wires.forEach(w => addEdge(w.from, w.to));
+
+      // Relay internal contacts
+      for (let ch = 1; ch <= relayChannels; ch++) {
+        if (relayEnergized[ch]) {
+          addEdge(`RELAY_COM${ch}`, `RELAY_NO${ch}`);
+        } else {
+          addEdge(`RELAY_COM${ch}`, `RELAY_NC${ch}`);
         }
-      });
-      // Internal Arduino GND & 5V connections
-      ['UNO_GND_TOP', 'UNO_GND1', 'UNO_GND2'].forEach(g1 => {
-        ['UNO_GND_TOP', 'UNO_GND1', 'UNO_GND2'].forEach(g2 => {
-          if (g1 !== g2) adj[g1].add(g2);
-        });
-      });
+      }
       return adj;
     }
 
-    function isConnected(adj, startId, targetIds) {
-      if (!adj[startId]) return false;
-      const targets = new Set(Array.isArray(targetIds) ? targetIds : [targetIds]);
-      const visited = new Set([startId]);
-      const q = [startId];
-      while (q.length) {
-        const cur = q.shift();
-        if (targets.has(cur)) return true;
-        for (const nxt of adj[cur]) {
+    function isConnected(adj, start, target) {
+      if (start === target) return true;
+      if (!adj[start]) return false;
+      const visited = new Set([start]);
+      const queue = [start];
+      while (queue.length) {
+        const curr = queue.shift();
+        if (curr === target) return true;
+        if (!adj[curr]) continue;
+        for (const nxt of adj[curr]) {
           if (!visited.has(nxt)) {
             visited.add(nxt);
-            q.push(nxt);
+            queue.push(nxt);
           }
         }
       }
       return false;
     }
 
-    function getConnectedDigitalPin(adj, pinId) {
-      const dPins = ['UNO_D2','UNO_D3','UNO_D4','UNO_D5','UNO_D6','UNO_D7','UNO_D8','UNO_D9','UNO_D10','UNO_D11','UNO_D12','UNO_D13'];
-      for (const dp of dPins) {
-        if (isConnected(adj, pinId, dp)) return dp;
+    function getConnectedNodes(adj, start) {
+      const visited = new Set();
+      if (!adj[start]) return visited;
+      const queue = [start];
+      visited.add(start);
+      while (queue.length) {
+        const curr = queue.shift();
+        if (!adj[curr]) continue;
+        for (const nxt of adj[curr]) {
+          if (!visited.has(nxt)) {
+            visited.add(nxt);
+            queue.push(nxt);
+          }
+        }
       }
-      return null;
+      return visited;
+    }
+
+    function isNodeHigh5V(adj, nodeId) {
+      const group = getConnectedNodes(adj, nodeId);
+      if (group.has('UNO_5V')) return true;
+      for (const id of group) {
+        if (id.startsWith('UNO_D')) {
+          const num = parseInt(id.replace('UNO_D', ''), 10);
+          if (pinStates[num] === 1) return true;
+        }
+      }
+      return false;
     }
 
     function evaluateCircuit() {
-      const adj = buildAdjacency();
+      const dcAdj = buildAdjacency();
 
-      // 1. Breaker & 12VAC Transformer
-      const badge220 = document.getElementById('badge-220v');
-      const badge12 = document.getElementById('badge-12v');
+      // Breaker & 12VAC
+      const b220 = document.getElementById('badge-220v');
+      const b12 = document.getElementById('badge-12v');
       const txLed = document.getElementById('tx-led');
-
       if (breakerOn) {
-        badge220.textContent = '220VAC: ON';
-        badge220.className = 'px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-        badge12.textContent = '12VAC: 12V ON';
-        badge12.className = 'px-2 py-0.5 rounded-full font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-500/40';
-        txLed.setAttribute('fill', '#22c55e');
+        b220.textContent = '220VAC: ON';
+        b220.className = 'px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        b12.textContent = '12VAC: 12V ON';
+        b12.className = 'px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        txLed.setAttribute('fill', '#facc15');
       } else {
-        badge220.textContent = '220VAC: OFF';
-        badge220.className = 'px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40';
-        badge12.textContent = '12VAC: 0V';
-        badge12.className = 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+        b220.textContent = '220VAC: OFF';
+        b220.className = 'px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        b12.textContent = '12VAC: 0V';
+        b12.className = 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
         txLed.setAttribute('fill', '#422006');
       }
 
-      // 2. OLED Power & I2C
-      const oledPowered = isConnected(adj, 'OLED_VCC', 'UNO_5V') &&
-                          isConnected(adj, 'OLED_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']) &&
-                          isConnected(adj, 'OLED_SDA', 'UNO_A4') &&
-                          isConnected(adj, 'OLED_SCL', 'UNO_A5');
-      const badgeOled = document.getElementById('badge-oled');
-      badgeOled.textContent = oledPowered ? 'OLED: ON (6L)' : 'OLED: OFF';
-      badgeOled.className = oledPowered
+      // Arduino Built-in L (D13)
+      document.getElementById('uno-led-l').setAttribute('fill', pinStates[13] ? '#facc15' : '#713f12');
+
+      // OLED Power & I2C
+      const oledPowered =
+        isConnected(dcAdj, 'OLED_VCC', 'UNO_5V') &&
+        isConnected(dcAdj, 'OLED_GND', 'UNO_GND1') &&
+        isConnected(dcAdj, 'OLED_SCL', 'UNO_A5') &&
+        isConnected(dcAdj, 'OLED_SDA', 'UNO_A4');
+      updateOLEDVisual(oledPowered);
+      const bOled = document.getElementById('badge-oled');
+      bOled.textContent = oledPowered ? 'OLED: ON' : 'OLED: OFF';
+      bOled.className = oledPowered
         ? 'px-2 py-0.5 rounded-full font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40'
         : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
-      updateOLEDVisual(oledPowered);
 
-      // 3. LED 5mm (5V DC)
-      const led5Gnd = isConnected(adj, 'LED5_NEG', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
-      const led5SrcPin = getConnectedDigitalPin(adj, 'LED5_POS');
-      const led5Direct5V = isConnected(adj, 'LED5_POS', 'UNO_5V');
-      const led5On = led5Gnd && (led5Direct5V || (led5SrcPin && pinStates[led5SrcPin] === 1));
-
-      document.getElementById('led5mm-glow').setAttribute('opacity', led5On ? '1' : '0');
-      document.getElementById('led5mm-dome').setAttribute('fill', led5On ? '#4ade80' : '#14532d');
-      const badgeLed5 = document.getElementById('badge-led5mm');
-      badgeLed5.textContent = led5On ? 'LED 5mm: ON' : 'LED 5mm: OFF';
-      badgeLed5.className = led5On
+      // LED 5mm #1 (Green: ขาซ้าย + รับไฟ HIGH, ขาขวา - ผ่าน R220Ω ลง GND)
+      const led1On = isNodeHigh5V(dcAdj, 'LED1_POS') && isConnected(dcAdj, 'LED1_NEG', 'UNO_GND1');
+      document.getElementById('led1-glow').setAttribute('opacity', led1On ? '0.95' : '0');
+      document.getElementById('led1-dome').setAttribute('fill', led1On ? '#4ade80' : '#14532d');
+      const bLed1 = document.getElementById('badge-led5mm1');
+      bLed1.textContent = led1On ? 'LED1: ON' : 'LED1: OFF';
+      bLed1.className = led1On
         ? 'px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
         : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
 
-      // Arduino Built-in L (D13)
-      document.getElementById('uno-led-l').setAttribute('fill', pinStates['UNO_D13'] ? '#facc15' : '#713f12');
+      // LED 5mm #2 (Red: ขาซ้าย + รับไฟ HIGH, ขาขวา - ผ่าน R220Ω ลง GND)
+      const led2On = isNodeHigh5V(dcAdj, 'LED2_POS') && isConnected(dcAdj, 'LED2_NEG', 'UNO_GND1');
+      document.getElementById('led2-glow').setAttribute('opacity', led2On ? '0.95' : '0');
+      document.getElementById('led2-dome').setAttribute('fill', led2On ? '#f87171' : '#7f1d1d');
+      const bLed2 = document.getElementById('badge-led5mm2');
+      bLed2.textContent = led2On ? 'LED2: ON' : 'LED2: OFF';
+      bLed2.className = led2On
+        ? 'px-2 py-0.5 rounded-full font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40'
+        : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
 
-      // 4. Relay Power & Channels
-      const relayPowerOk = isConnected(adj, 'RELAY_VCC', 'UNO_5V') &&
-                           isConnected(adj, 'RELAY_GND', ['UNO_GND1', 'UNO_GND2', 'UNO_GND_TOP']);
-      const badgeRelayPwr = document.getElementById('badge-relay-pwr');
-      badgeRelayPwr.textContent = relayPowerOk ? `Relay (${relayChannels}-Ch): พร้อม` : `Relay (${relayChannels}-Ch): ไม่ครบวงจร`;
-      badgeRelayPwr.className = relayPowerOk
+      // Relay Coils
+      const relayPowerOk = isConnected(dcAdj, 'RELAY_VCC', 'UNO_5V') && isConnected(dcAdj, 'RELAY_GND', 'UNO_GND1');
+      const bRelay = document.getElementById('badge-relay-pwr');
+      bRelay.textContent = relayPowerOk ? `Relay ${relayChannels}-Ch: พร้อม` : 'Relay: ไม่ครบวงจร';
+      bRelay.className = relayPowerOk
         ? 'px-2 py-0.5 rounded-full font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/40'
         : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
 
-      // Build AC adjacency with Relay internal contacts
-      const acAdj = buildAdjacency();
-      for (let ch = 1; ch <= relayChannels; ch++) {
-        const ctrlPin = getConnectedDigitalPin(adj, `RELAY_IN${ch}`);
-        const active = relayPowerOk && ctrlPin && pinStates[ctrlPin] === 1;
-        relayEnergized[ch] = !!active;
-
-        const ledEl = document.getElementById(`relay-led-${ch}`);
-        const txtEl = document.getElementById(`relay-txt-${ch}`);
-        if (ledEl) ledEl.setAttribute('fill', active ? '#ef4444' : '#450a0a');
-        if (txtEl) txtEl.textContent = active ? `NO${ch} (ON)` : `NC${ch}`;
-
-        if (active) {
-          acAdj[`RELAY_COM${ch}`].add(`RELAY_NO${ch}`);
-          acAdj[`RELAY_NO${ch}`].add(`RELAY_COM${ch}`);
+      for (let ch = 1; ch <= 4; ch++) {
+        if (ch <= relayChannels && relayPowerOk) {
+          relayEnergized[ch] = isNodeHigh5V(dcAdj, `RELAY_IN${ch}`);
         } else {
-          acAdj[`RELAY_COM${ch}`].add(`RELAY_NC${ch}`);
-          acAdj[`RELAY_NC${ch}`].add(`RELAY_COM${ch}`);
+          relayEnergized[ch] = false;
         }
+        const rLed = document.getElementById(`relay-led-${ch}`);
+        const rTxt = document.getElementById(`relay-txt-${ch}`);
+        if (rLed) rLed.setAttribute('fill', relayEnergized[ch] ? '#ef4444' : '#450a0a');
+        if (rTxt) rTxt.textContent = relayEnergized[ch] ? `NO${ch} (ON)` : `NC${ch}`;
       }
 
-      // 5. Evaluate 12VAC Loads (Lamp #1, Fan #1, Fan #2)
-      function isLoadPowered(p1, p2) {
+      // Evaluate 12VAC Loads
+      const acAdj = buildAdjacency();
+      const checkACLoad = (pA, pB) => {
         if (!breakerOn) return false;
-        const c1 = isConnected(acAdj, p1, 'AC12_1') && isConnected(acAdj, p2, 'AC12_2');
-        const c2 = isConnected(acAdj, p1, 'AC12_2') && isConnected(acAdj, p2, 'AC12_1');
+        const c1 = isConnected(acAdj, pA, 'AC12_1') && isConnected(acAdj, pB, 'AC12_2');
+        const c2 = isConnected(acAdj, pA, 'AC12_2') && isConnected(acAdj, pB, 'AC12_1');
         return c1 || c2;
-      }
+      };
 
-      const lampOn = isLoadPowered('LAMP_1', 'LAMP_2');
-      const fan1On = isLoadPowered('FAN_1', 'FAN_2');
-      const fan2On = isLoadPowered('FAN2_1', 'FAN2_2');
+      const lamp1On = checkACLoad('LAMP1_1', 'LAMP1_2');
+      const lamp2On = checkACLoad('LAMP2_1', 'LAMP2_2');
+      const fan1On = checkACLoad('FAN1_1', 'FAN1_2');
+      const fan2On = checkACLoad('FAN2_1', 'FAN2_2');
 
-      document.getElementById('bulb-glow-outer').setAttribute('opacity', lampOn ? '1' : '0');
-      document.getElementById('bulb-glow-inner').setAttribute('opacity', lampOn ? '0.85' : '0');
-      document.getElementById('bulb-filament').setAttribute('stroke', lampOn ? '#fef08a' : '#475569');
+      document.getElementById('bulb1-glow-outer').setAttribute('opacity', lamp1On ? '0.95' : '0');
+      document.getElementById('bulb1-glow-inner').setAttribute('opacity', lamp1On ? '0.9' : '0');
+      document.getElementById('bulb1-filament').setAttribute('stroke', lamp1On ? '#ffffff' : '#475569');
+
+      document.getElementById('bulb2-glow-outer').setAttribute('opacity', lamp2On ? '0.95' : '0');
+      document.getElementById('bulb2-glow-inner').setAttribute('opacity', lamp2On ? '0.9' : '0');
+      document.getElementById('bulb2-filament').setAttribute('stroke', lamp2On ? '#ffffff' : '#475569');
 
       document.getElementById('fan-blades').classList.toggle('fan-spinning', fan1On);
       document.getElementById('fan2-blades').classList.toggle('fan-spinning', fan2On);
 
       const activeLoads = [];
-      if (lampOn) activeLoads.push('หลอดไฟ #1');
-      if (fan1On) activeLoads.push('พัดลม #1');
-      if (fan2On) activeLoads.push('พัดลม #2');
+      if (lamp1On) activeLoads.push('หลอด#1');
+      if (lamp2On) activeLoads.push('หลอด#2');
+      if (fan1On) activeLoads.push('พัดลม#1');
+      if (fan2On) activeLoads.push('พัดลม#2');
 
-      const badgeLoads = document.getElementById('badge-loads');
-      badgeLoads.textContent = activeLoads.length ? `โหลด 12VAC: ${activeLoads.join(', ')}` : 'โหลด 12VAC: ปิด';
-      badgeLoads.className = activeLoads.length
-        ? 'px-2 py-0.5 rounded-full font-semibold bg-amber-500/25 text-amber-200 border border-amber-400/50'
+      const bLoads = document.getElementById('badge-loads');
+      bLoads.textContent = activeLoads.length ? `โหลด 12VAC: ${activeLoads.join(', ')}` : 'โหลด 12VAC: ปิด';
+      bLoads.className = activeLoads.length
+        ? 'px-2 py-0.5 rounded-full font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-500/40'
         : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
 
-      // Diagnosis text
       const diag = document.getElementById('circuitDiagnosis');
       if (!breakerOn) {
-        diag.textContent = '⚠️ เบรกเกอร์ 220VAC ปิดอยู่ — คลิกที่ตัวเบรกเกอร์เพื่อจ่ายไฟ 12VAC';
+        diag.textContent = '⚠️ เบรกเกอร์ 220VAC ปิดอยู่ — คลิกที่สวิตช์ BREAKER สีแดงเพื่อจ่ายไฟ 12VAC';
       } else if (!relayPowerOk) {
-        diag.textContent = '⚠️ กรุณาต่อสายไฟ 5V และ GND เข้าโมดูล Relay (หรือกด "ต่อวงจรอัตโนมัติ")';
+        diag.textContent = '⚠️ โมดูล Relay ยังไม่ครบวงจร (กด "ต่อวงจรอัตโนมัติ" หรือต่อ VCC→5V, GND→GND)';
       } else {
-        diag.textContent = '✅ วงจรพร้อมทำงาน! กดปุ่ม "เขียนโค้ด" แล้วกด "รัน (Run)" เพื่อดูผลบนจอ OLED 6 บรรทัดและโหลดต่างๆ';
+        diag.textContent = `✅ ระบบพร้อมทำงาน | OLED: ${oledPowered ? 'ON' : 'OFF'} | LED5mm: ${led1On ? '1' : '-'}/${led2On ? '2' : '-'} | โหลด 12VAC: ${activeLoads.length ? activeLoads.join(', ') : 'รอคำสั่ง'}`;
       }
     }
 
     // =========================================================================
-    // 5. INTERACTIVE CONTROLS (BREAKER, PIR, LDR, COLOR, CHANNELS, AUTO-WIRE)
+    // 5. INTERACTIVE HARDWARE CONTROLS (BREAKER, PIR, LDR, RESET)
     // =========================================================================
     document.getElementById('mainBreakerSwitch').addEventListener('click', () => {
       breakerOn = !breakerOn;
@@ -1235,28 +1489,45 @@ void loop() {
       pir1Motion = !pir1Motion;
       document.getElementById('pir1-dome-glow').setAttribute('fill', pir1Motion ? '#f97316' : '#e2e8f0');
       document.getElementById('pir1-status-txt').textContent = pir1Motion ? 'MOTION!' : 'CLEAR';
+      document.getElementById('pir1-status-txt').setAttribute('fill', pir1Motion ? '#ffffff' : '#334155');
     });
 
     document.getElementById('pir2-module').addEventListener('click', () => {
       pir2Motion = !pir2Motion;
       document.getElementById('pir2-dome-glow').setAttribute('fill', pir2Motion ? '#f97316' : '#e2e8f0');
       document.getElementById('pir2-status-txt').textContent = pir2Motion ? 'MOTION!' : 'CLEAR';
+      document.getElementById('pir2-status-txt').setAttribute('fill', pir2Motion ? '#ffffff' : '#334155');
     });
 
     document.getElementById('ldr-module').addEventListener('click', () => {
       ldrDark = !ldrDark;
       document.getElementById('ldr-disc').setAttribute('fill', ldrDark ? '#334155' : '#facc15');
       document.getElementById('ldr-status-txt').textContent = ldrDark ? 'มืด (DO=HIGH)' : 'สว่าง (DO=LOW)';
+      document.getElementById('ldr-status-txt').setAttribute('fill', ldrDark ? '#94a3b8' : '#fde047');
     });
 
     document.getElementById('arduinoResetBtn').addEventListener('click', () => {
-      stopSimulation();
-      logSerial('[UNO] Reset เรียบร้อย');
+      if (isRunning) {
+        stopSimulation();
+        setTimeout(startSimulation, 150);
+      }
     });
+
+    // =========================================================================
+    // 6. TOOLBAR ACTIONS (COLOR, CHANNEL MODE, AUTO-WIRE, CLEAR)
+    // =========================================================================
+    function syncChannelButtons(ch) {
+      document.querySelectorAll('.ch-mode-btn').forEach(b => {
+        const isMatch = parseInt(b.getAttribute('data-ch'), 10) === ch;
+        b.classList.toggle('bg-teal-600', isMatch);
+        b.classList.toggle('text-white', isMatch);
+        b.classList.toggle('text-slate-300', !isMatch);
+      });
+    }
 
     document.querySelectorAll('.color-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        selectedColor = btn.dataset.color;
+        selectedColor = btn.getAttribute('data-color');
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-2', 'ring-white', 'scale-110'));
         btn.classList.add('ring-2', 'ring-white', 'scale-110');
       });
@@ -1264,413 +1535,635 @@ void loop() {
 
     document.querySelectorAll('.ch-mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const ch = parseInt(btn.dataset.ch, 10);
-        document.querySelectorAll('.ch-mode-btn').forEach(b => {
-          b.classList.remove('bg-teal-600', 'text-white');
-          b.classList.add('text-slate-300');
-        });
-        btn.classList.add('bg-teal-600', 'text-white');
-        btn.classList.remove('text-slate-300');
+        const ch = parseInt(btn.getAttribute('data-ch'), 10);
+        syncChannelButtons(ch);
         buildRelayBoard(ch);
       });
     });
 
     document.getElementById('btnClearWires').addEventListener('click', () => {
       wires = [];
-      cancelDrawing();
+      cancelWireDrawing();
       renderWires();
       evaluateCircuit();
     });
 
-    document.getElementById('btnAutoWire').addEventListener('click', () => {
+    function autoWireCircuit() {
       wires = [
         // OLED I2C
-        { id: 'aw1', from: 'OLED_VCC', to: 'UNO_5V',      color: '#ef4444', waypoints: [{ x: 121, y: 230 }, { x: 206, y: 230 }, { x: 206, y: 515 }] },
-        { id: 'aw2', from: 'OLED_GND', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 154, y: 222 }, { x: 368, y: 222 }] },
-        { id: 'aw3', from: 'OLED_SCL', to: 'UNO_A5',      color: '#a855f7', waypoints: [{ x: 188, y: 245 }, { x: 445, y: 245 }, { x: 445, y: 525 }, { x: 362, y: 525 }] },
-        { id: 'aw4', from: 'OLED_SDA', to: 'UNO_A4',      color: '#22c55e', waypoints: [{ x: 221, y: 238 }, { x: 435, y: 238 }, { x: 435, y: 518 }, { x: 346, y: 518 }] },
+        { id: 'aw1', from: 'OLED_VCC', to: 'UNO_5V',   color: '#ef4444', waypoints: [{ x: 40, y: 220 }, { x: 40, y: 520 }, { x: 206, y: 520 }] },
+        { id: 'aw2', from: 'OLED_GND', to: 'UNO_GND1', color: '#1e293b', waypoints: [{ x: 132, y: 225 }, { x: 50, y: 225 }, { x: 50, y: 530 }, { x: 222, y: 530 }] },
+        { id: 'aw3', from: 'OLED_SCL', to: 'UNO_A5',   color: '#a855f7', waypoints: [{ x: 166, y: 230 }, { x: 435, y: 230 }, { x: 435, y: 525 }, { x: 362, y: 525 }] },
+        { id: 'aw4', from: 'OLED_SDA', to: 'UNO_A4',   color: '#22c55e', waypoints: [{ x: 199, y: 238 }, { x: 425, y: 238 }, { x: 425, y: 515 }, { x: 346, y: 515 }] },
 
-        // LED 5mm (5V DC) -> D12 & GND
-        { id: 'aw5', from: 'LED5_POS', to: 'UNO_D12',     color: '#22c55e', waypoints: [{ x: 378, y: 252 }, { x: 180, y: 252 }] },
-        { id: 'aw6', from: 'LED5_NEG', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 414, y: 222 }, { x: 368, y: 222 }] },
+        // LED 5mm #1 (ซ้าย + -> D12, ขวา - ผ่าน R220Ω -> GND)
+        { id: 'aw5', from: 'LED1_POS', to: 'UNO_D12',     color: '#22c55e', waypoints: [{ x: 314, y: 215 }, { x: 180, y: 215 }] },
+        { id: 'aw6', from: 'LED1_NEG', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 336, y: 245 }, { x: 368, y: 245 }] },
+
+        // LED 5mm #2 (ซ้าย + -> D11, ขวา - ผ่าน R220Ω -> GND)
+        { id: 'aw7', from: 'LED2_POS', to: 'UNO_D11',     color: '#ef4444', waypoints: [{ x: 414, y: 218 }, { x: 196, y: 218 }] },
+        { id: 'aw8', from: 'LED2_NEG', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 436, y: 252 }, { x: 368, y: 252 }] },
+
+        // Sensors: PIR #1 (D2), PIR #2 (D10), LDR (DO->D3, AO->A0)
+        { id: 'aws1', from: 'PIR1_VCC', to: 'UNO_5V',   color: '#ef4444', waypoints: [{ x: 72, y: 565 }, { x: 206, y: 565 }] },
+        { id: 'aws2', from: 'PIR1_GND', to: 'UNO_GND1', color: '#1e293b', waypoints: [{ x: 132, y: 572 }, { x: 222, y: 572 }] },
+        { id: 'aws3', from: 'PIR1_OUT', to: 'UNO_D2',   color: '#eab308', waypoints: [{ x: 102, y: 558 }, { x: 448, y: 558 }, { x: 448, y: 255 }, { x: 352, y: 255 }] },
+
+        { id: 'aws4', from: 'PIR2_VCC', to: 'UNO_5V',   color: '#ef4444', waypoints: [{ x: 218, y: 565 }, { x: 206, y: 565 }] },
+        { id: 'aws5', from: 'PIR2_GND', to: 'UNO_GND1', color: '#1e293b', waypoints: [{ x: 278, y: 572 }, { x: 222, y: 572 }] },
+        { id: 'aws6', from: 'PIR2_OUT', to: 'UNO_D10',  color: '#eab308', waypoints: [{ x: 248, y: 550 }, { x: 440, y: 550 }, { x: 440, y: 224 }, { x: 212, y: 224 }] },
+
+        { id: 'aws7', from: 'LDR_VCC',  to: 'UNO_5V',   color: '#ef4444', waypoints: [{ x: 354, y: 565 }, { x: 206, y: 565 }] },
+        { id: 'aws8', from: 'LDR_GND',  to: 'UNO_GND2', color: '#1e293b', waypoints: [{ x: 380, y: 572 }, { x: 238, y: 572 }] },
+        { id: 'aws9', from: 'LDR_DO',   to: 'UNO_D3',   color: '#eab308', waypoints: [{ x: 407, y: 540 }, { x: 456, y: 540 }, { x: 456, y: 262 }, { x: 336, y: 262 }] },
+        { id: 'aws10',from: 'LDR_AO',   to: 'UNO_A0',   color: '#22c55e', waypoints: [{ x: 434, y: 505 }, { x: 282, y: 505 }] },
 
         // Relay Power & CH1
-        { id: 'aw7', from: 'UNO_5V',   to: 'RELAY_VCC',   color: '#ef4444', waypoints: [{ x: 206, y: 535 }, { x: 472, y: 535 }, { x: 472, y: 118 }] },
-        { id: 'aw8', from: 'UNO_GND1', to: 'RELAY_GND',   color: '#1e293b', waypoints: [{ x: 222, y: 545 }, { x: 482, y: 545 }, { x: 482, y: 144 }] },
-        { id: 'aw9', from: 'UNO_D7',   to: 'RELAY_IN1',   color: '#eab308', waypoints: [{ x: 272, y: 258 }, { x: 462, y: 258 }, { x: 462, y: 170 }] },
+        { id: 'aw9',  from: 'RELAY_VCC', to: 'UNO_5V',   color: '#ef4444', waypoints: [{ x: 490, y: 120 }, { x: 490, y: 545 }, { x: 206, y: 545 }] },
+        { id: 'aw10', from: 'RELAY_GND', to: 'UNO_GND2', color: '#1e293b', waypoints: [{ x: 482, y: 146 }, { x: 482, y: 555 }, { x: 238, y: 555 }] },
+        { id: 'aw11', from: 'RELAY_IN1', to: 'UNO_D7',   color: '#eab308', waypoints: [{ x: 470, y: 172 }, { x: 470, y: 260 }, { x: 272, y: 260 }] },
 
-        // 12VAC Lamp #1 via CH1
-        { id: 'aw10', from: 'AC12_1',     to: 'RELAY_COM1', color: '#3b82f6', waypoints: [{ x: 855, y: 654 }, { x: 855, y: 138 }] },
-        { id: 'aw11', from: 'RELAY_NO1',  to: 'LAMP_1',     color: '#eab308', waypoints: [{ x: 875, y: 105 }, { x: 875, y: 390 }, { x: 973, y: 390 }] },
-        { id: 'aw12', from: 'LAMP_2',     to: 'AC12_2',     color: '#1e293b', waypoints: [{ x: 1037, y: 415 }, { x: 865, y: 415 }, { x: 865, y: 712 }] }
+        // 12VAC CH1 -> Lamp #1
+        { id: 'aw12', from: 'AC12_1',    to: 'RELAY_COM1', color: '#3b82f6', waypoints: [{ x: 865, y: 654 }, { x: 865, y: 136 }] },
+        { id: 'aw13', from: 'RELAY_NO1', to: 'LAMP1_1',    color: '#ef4444', waypoints: [{ x: 885, y: 106 }, { x: 885, y: 350 }, { x: 973, y: 350 }] },
+        { id: 'aw14', from: 'LAMP1_2',   to: 'AC12_2',     color: '#3b82f6', waypoints: [{ x: 1037, y: 380 }, { x: 895, y: 380 }, { x: 895, y: 712 }] }
       ];
 
       if (relayChannels >= 2) {
         wires.push(
-          { id: 'aw13', from: 'UNO_D6',     to: 'RELAY_IN2',  color: '#eab308', waypoints: [{ x: 288, y: 268 }, { x: 452, y: 268 }, { x: 452, y: 196 }] },
-          { id: 'aw14', from: 'AC12_1',     to: 'RELAY_COM2', color: '#3b82f6', waypoints: [{ x: 855, y: 654 }, { x: 855, y: 242 }] },
-          { id: 'aw15', from: 'RELAY_NO2',  to: 'FAN_1',      color: '#38bdf8', waypoints: [{ x: 885, y: 209 }, { x: 885, y: 755 }, { x: 973, y: 755 }] },
-          { id: 'aw16', from: 'FAN_2',      to: 'AC12_2',     color: '#1e293b', waypoints: [{ x: 1037, y: 768 }, { x: 865, y: 768 }, { x: 865, y: 712 }] }
+          { id: 'aw15', from: 'RELAY_IN2', to: 'UNO_D6',     color: '#eab308', waypoints: [{ x: 462, y: 200 }, { x: 462, y: 268 }, { x: 288, y: 268 }] },
+          { id: 'aw16', from: 'AC12_1',    to: 'RELAY_COM2', color: '#3b82f6', waypoints: [{ x: 865, y: 654 }, { x: 865, y: 240 }] },
+          { id: 'aw17', from: 'RELAY_NO2', to: 'LAMP2_1',    color: '#ef4444', waypoints: [{ x: 840, y: 210 }, { x: 840, y: 400 }, { x: 1233, y: 400 }] },
+          { id: 'aw18', from: 'LAMP2_2',   to: 'AC12_2',     color: '#3b82f6', waypoints: [{ x: 1297, y: 420 }, { x: 895, y: 420 }, { x: 895, y: 712 }] }
         );
       }
 
       if (relayChannels === 4) {
         wires.push(
-          { id: 'aw17', from: 'UNO_D5',     to: 'RELAY_IN3',  color: '#eab308', waypoints: [{ x: 304, y: 274 }, { x: 442, y: 274 }, { x: 442, y: 222 }] },
-          { id: 'aw18', from: 'AC12_1',     to: 'RELAY_COM3', color: '#3b82f6', waypoints: [{ x: 855, y: 654 }, { x: 855, y: 315 }] },
-          { id: 'aw19', from: 'RELAY_NO3',  to: 'FAN2_1',     color: '#a855f7', waypoints: [{ x: 1135, y: 285 }, { x: 1135, y: 565 }, { x: 1233, y: 565 }] },
-          { id: 'aw20', from: 'FAN2_2',     to: 'AC12_2',     color: '#1e293b', waypoints: [{ x: 1297, y: 580 }, { x: 1125, y: 580 }, { x: 1125, y: 785 }, { x: 865, y: 785 }, { x: 865, y: 712 }] }
+          { id: 'aw19', from: 'RELAY_IN3', to: 'UNO_D5',     color: '#eab308', waypoints: [{ x: 454, y: 226 }, { x: 454, y: 274 }, { x: 304, y: 274 }] },
+          { id: 'aw20', from: 'RELAY_IN4', to: 'UNO_D4',     color: '#eab308', waypoints: [{ x: 446, y: 252 }, { x: 446, y: 280 }, { x: 320, y: 280 }] },
+          { id: 'aw21', from: 'AC12_1',    to: 'RELAY_COM3', color: '#3b82f6', waypoints: [{ x: 865, y: 654 }, { x: 865, y: 315 }] },
+          { id: 'aw22', from: 'RELAY_NO3', to: 'FAN1_1',     color: '#ef4444', waypoints: [{ x: 850, y: 290 }, { x: 850, y: 750 }, { x: 973, y: 750 }] },
+          { id: 'aw23', from: 'FAN1_2',    to: 'AC12_2',     color: '#3b82f6', waypoints: [{ x: 1037, y: 770 }, { x: 895, y: 770 }, { x: 895, y: 712 }] },
+          { id: 'aw24', from: 'AC12_1',    to: 'RELAY_COM4', color: '#3b82f6', waypoints: [{ x: 865, y: 654 }, { x: 865, y: 407 }] },
+          { id: 'aw25', from: 'RELAY_NO4', to: 'FAN2_1',     color: '#ef4444', waypoints: [{ x: 830, y: 382 }, { x: 830, y: 785 }, { x: 1233, y: 785 }] },
+          { id: 'aw26', from: 'FAN2_2',    to: 'AC12_2',     color: '#3b82f6', waypoints: [{ x: 1297, y: 798 }, { x: 895, y: 798 }, { x: 895, y: 712 }] }
         );
       }
 
       renderWires();
       evaluateCircuit();
-      logSerial(`[ระบบ] ต่อวงจรอัตโนมัติโหมด ${relayChannels}-Ch เรียบร้อยแล้ว`);
-    });
+    }
+
+    document.getElementById('btnAutoWire').addEventListener('click', autoWireCircuit);
 
     // =========================================================================
-    // 6. ARDUINO C++ MINI-INTERPRETER (รองรับ OLED 6 บรรทัด)
+    // 7. ARDUINO C++ SIMULATOR ENGINE (NON-BLOCKING & FULL LOGIC SUPPORT)
     // =========================================================================
-    const btnRun = document.getElementById('btnRun');
-    const btnStop = document.getElementById('btnStop');
     const serialConsole = document.getElementById('serialConsole');
     const serialStatusDot = document.getElementById('serialStatusDot');
+    const btnRun = document.getElementById('btnRun');
+    const btnStop = document.getElementById('btnStop');
+    const topBtnRun = document.getElementById('topBtnRun');
+    const topBtnStop = document.getElementById('topBtnStop');
 
-    function logSerial(msg) {
+    let lastLoggedMsg = '';
+    function logSerial(msg, cls = 'text-emerald-300', force = false) {
+      const text = String(msg);
+      if (!force && text === lastLoggedMsg) return; // Prevent duplicate spam
+      lastLoggedMsg = text;
+
       const div = document.createElement('div');
-      div.textContent = msg;
+      div.className = cls;
+      div.textContent = text;
       serialConsole.appendChild(div);
+
+      // Keep max 100 lines to prevent memory/DOM freeze
+      while (serialConsole.children.length > 100) {
+        serialConsole.removeChild(serialConsole.firstChild);
+      }
       serialConsole.scrollTop = serialConsole.scrollHeight;
     }
 
     document.getElementById('btnClearConsole').addEventListener('click', () => {
       serialConsole.innerHTML = '';
+      lastLoggedMsg = '';
     });
 
-    function extractBlock(code, fnName) {
-      const rx = new RegExp(`void\\s+${fnName}\\s*\\(\\s*\\)\\s*\\{`);
-      const m = rx.exec(code);
-      if (!m) return '';
-      let depth = 1, i = m.index + m[0].length, start = i;
-      while (i < code.length && depth > 0) {
-        if (code[i] === '{') depth++;
-        else if (code[i] === '}') depth--;
-        i++;
+    function readHardwareDigitalPin(pinNum) {
+      const adj = buildAdjacency();
+      const unoPin = `UNO_D${pinNum}`;
+      if (isConnected(adj, unoPin, 'PIR1_OUT') && isConnected(adj, 'PIR1_VCC', 'UNO_5V') && isConnected(adj, 'PIR1_GND', 'UNO_GND1')) {
+        return pir1Motion ? 1 : 0;
       }
-      return code.slice(start, i - 1);
+      if (isConnected(adj, unoPin, 'PIR2_OUT') && isConnected(adj, 'PIR2_VCC', 'UNO_5V') && isConnected(adj, 'PIR2_GND', 'UNO_GND1')) {
+        return pir2Motion ? 1 : 0;
+      }
+      if (isConnected(adj, unoPin, 'LDR_DO') && isConnected(adj, 'LDR_VCC', 'UNO_5V') && isConnected(adj, 'LDR_GND', 'UNO_GND1')) {
+        return ldrDark ? 1 : 0;
+      }
+      return pinStates[pinNum] || 0;
     }
 
-  async function execStatements(block, vars, myToken) {
-      const lines = block.split('\n');
-      for (let raw of lines) {
-        if (myToken !== runToken) return;
-        const line = raw.replace(/\/\/.*$/, '').trim();
-        if (!line) continue;
+    function readHardwareAnalogPin(pinName) {
+      const adj = buildAdjacency();
+      const unoPin = `UNO_${pinName}`;
+      if (isConnected(adj, unoPin, 'LDR_AO') && isConnected(adj, 'LDR_VCC', 'UNO_5V') && isConnected(adj, 'LDR_GND', 'UNO_GND1')) {
+        return ldrDark ? 850 : 180;
+      }
+      return 0;
+    }
 
-        // ข้ามบรรทัดประกาศโครงสร้าง C++ ทั่วไป
-        if (
-          line.startsWith('#') ||
-          line.startsWith('Adafruit_SSD1306') ||
-          line.startsWith('if (!display.begin') ||
-          line.startsWith('for (;;)') ||
-          line.startsWith('display.setTextColor') ||
-          line === '}' ||
-          line === '{'
-        ) {
-          continue;
-        }
+    function transpileArduinoToAsyncJS(code) {
+      // Strip block & line comments
+      let js = code
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/.*$/gm, '');
 
-        // digitalWrite(pin, HIGH/LOW)
-        let m = line.match(/^digitalWrite\s*\(\s*([^,]+)\s*,\s*([^)]+)\s*\)\s*;?$/);
-        if (m) {
-          const pName = m[1].trim();
-          const pVal = vars[pName] !== undefined ? vars[pName] : parseInt(pName, 10);
-          const vStr = m[2].trim();
-          const state = (vStr === 'HIGH' || vStr === '1') ? 1 : 0;
-          if (!isNaN(pVal)) {
-            pinStates[`UNO_D${pVal}`] = state;
-            evaluateCircuit();
-          }
-          continue;
-        }
+      // Strip #include and convert #define
+      js = js.replace(/^\s*#include\s+.*$/gm, '');
+      js = js.replace(/^\s*#define\s+([a-zA-Z_]\w*)\s+(.+)$/gm, 'const $1 = $2;');
 
-        // delay(ms)
-        m = line.match(/^delay\s*\(\s*(\d+)\s*\)\s*;?$/);
-        if (m) {
-          const ms = parseInt(m[1], 10);
-          await new Promise(r => setTimeout(r, ms));
-          continue;
-        }
+      // Convert C++ typed arrays e.g. int arr[] = {1, 2};
+      js = js.replace(/\b(const\s+)?(unsigned\s+)?(int|long|float|double|bool|boolean|byte|char|short|String)\s+([a-zA-Z_]\w*)\s*\[\s*\d*\s*\]\s*=\s*\{([^}]*)\}/g, 'let $4 = [$5]');
 
-        // Serial.print / Serial.println
-        m = line.match(/^Serial\.(?:print|println)\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
-        if (m) {
-          logSerial(m[1]);
-          continue;
-        }
+      // Convert C++ variable declarations (preserves if, else if, else, &&, ||, !)
+      js = js.replace(/\b(const\s+)?(unsigned\s+)?(int|long|float|double|bool|boolean|byte|char|short|String)\s+(?=[a-zA-Z_]\w*\s*(?:=|;|,))/g, 'let ');
 
-        // OLED: display.clearDisplay()
-        if (/^display\.clearDisplay\s*\(\s*\)\s*;?$/.test(line)) {
-          oledDrawItems = [];
-          oledCursorX = 0;
-          oledCursorY = 0;
-          continue;
-        }
+      // Convert function signatures
+      js = js.replace(/\bvoid\s+setup\s*\(\s*\)/g, 'async function setup()');
+      js = js.replace(/\bvoid\s+loop\s*\(\s*\)/g, 'async function loop()');
+      js = js.replace(/\bvoid\s+([a-zA-Z_]\w*)\s*\(/g, 'async function $1(');
+      js = js.replace(/\b(int|long|float|double|bool|boolean|String)\s+([a-zA-Z_]\w*)\s*\(/g, 'async function $2(');
 
-        // OLED: display.setTextSize(n)
-        m = line.match(/^display\.setTextSize\s*\(\s*(\d+)\s*\)\s*;?$/);
-        if (m) {
-          oledTextSize = Math.max(1, parseInt(m[1], 10));
-          continue;
-        }
+      // Convert delay() to await __delay()
+      js = js.replace(/\bdelay\s*\(/g, 'await __delay(');
+      js = js.replace(/\bdelayMicroseconds\s*\(/g, 'await __delayMicro(');
 
-        // OLED: display.setCursor(x, y) — ใช้พิกัด 0-127 และ 0-63 จริง
-        m = line.match(/^display\.setCursor\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)\s*;?$/);
-        if (m) {
-          oledCursorX = parseInt(m[1], 10);
-          oledCursorY = parseInt(m[2], 10);
-          continue;
-        }
+      // Inject anti-freeze loop guard into while(...) { and for(...) {
+      js = js.replace(/\b(while|for)\s*\(([^()]*|\([^()]*\))*\)\s*\{/g, (match) => {
+        return `${match} if (++__loopGuard % 200 === 0) await __yield();`;
+      });
 
-        // OLED: รองรับทั้ง display.print("...") และ display.println("...")
-        m = line.match(/^display\.(print|println)\s*\(\s*"([^"]*)"\s*\)\s*;?$/);
-        if (m) {
-          const isPrintln = m[1] === 'println';
-          const text = m[2];
-          oledDrawItems.push({
-            x: oledCursorX,
-            y: oledCursorY,
-            size: oledTextSize,
-            text: text
-          });
-          if (isPrintln) {
-            oledCursorX = 0;
-            oledCursorY += 8 * oledTextSize; // ขึ้นบรรทัดใหม่ทีละ 8px เหมือน Adafruit_GFX จริง
-          } else {
-            oledCursorX += text.length * 6 * oledTextSize; // เลื่อนเคอร์เซอร์ขวาตัวละ 6px
-          }
-          continue;
-        }
+      return js;
+    }
 
-        // OLED: รองรับการแสดงค่าตัวแปร เช่น display.print(val)
-        m = line.match(/^display\.(print|println)\s*\(\s*([a-zA-Z_]\w*)\s*\)\s*;?$/);
-        if (m && vars[m[2]] !== undefined) {
-          const isPrintln = m[1] === 'println';
-          const text = String(vars[m[2]]);
-          oledDrawItems.push({
-            x: oledCursorX,
-            y: oledCursorY,
-            size: oledTextSize,
-            text: text
-          });
-          if (isPrintln) {
-            oledCursorX = 0;
-            oledCursorY += 8 * oledTextSize;
-          } else {
-            oledCursorX += text.length * 6 * oledTextSize;
-          }
-          continue;
-        }
-
-        // OLED: display.display()
-        if (/^display\.display\s*\(\s*\)\s*;?$/.test(line)) {
-          evaluateCircuit();
-          continue;
-        }
+    function setRunningButtonsUI(running) {
+      [btnRun, topBtnRun].forEach(b => {
+        b.disabled = running;
+        b.classList.toggle('opacity-50', running);
+        b.classList.toggle('cursor-not-allowed', running);
+      });
+      [btnStop, topBtnStop].forEach(b => {
+        b.disabled = !running;
+        b.classList.toggle('opacity-50', !running);
+        b.classList.toggle('cursor-not-allowed', !running);
+        b.classList.toggle('bg-rose-600/40', !running);
+        b.classList.toggle('text-rose-300/50', !running);
+        b.classList.toggle('bg-rose-600', running);
+        b.classList.toggle('hover:bg-rose-500', running);
+        b.classList.toggle('text-white', running);
+      });
+      if (running) {
+        serialStatusDot.classList.replace('bg-slate-600', 'bg-emerald-400');
+      } else {
+        serialStatusDot.classList.replace('bg-emerald-400', 'bg-slate-600');
       }
     }
 
     async function startSimulation() {
-      stopSimulation();
+      if (isRunning) return;
       isRunning = true;
       const myToken = ++runToken;
+      const startTime = Date.now();
+      lastLoggedMsg = '';
+      pinStates = {};
+      oledDrawItems = [];
+      oledCursorX = 0;
+      oledCursorY = 0;
+      oledTextSize = 1;
 
-      btnRun.disabled = true;
-      btnRun.classList.add('opacity-50', 'cursor-not-allowed');
-      btnStop.disabled = false;
-      btnStop.className = 'px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition';
-      serialStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+      setRunningButtonsUI(true);
+      logSerial('--- เริ่มการทำงาน Arduino UNO ---', 'text-sky-400', true);
 
-      const code = cppEditor.value;
-      const vars = {};
-      const varRx = /(?:int|const\s+int)\s+(\w+)\s*=\s*(\d+)\s*;/g;
-      let vm;
-      while ((vm = varRx.exec(code)) !== null) {
-        vars[vm[1]] = parseInt(vm[2], 10);
-      }
+      const HIGH = 1, LOW = 0, OUTPUT = 1, INPUT = 0, INPUT_PULLUP = 2;
+      const WHITE = 1, BLACK = 0, SSD1306_SWITCHCAPVCC = 2;
+      const A0 = 'A0', A1 = 'A1', A2 = 'A2', A3 = 'A3', A4 = 'A4', A5 = 'A5';
 
-      const setupCode = extractBlock(code, 'setup');
-      const loopCode = extractBlock(code, 'loop');
+      const pinMode = () => {};
+      const digitalWrite = (pin, val) => {
+        if (myToken !== runToken) return;
+        pinStates[pin] = val ? 1 : 0;
+        evaluateCircuit();
+      };
+      const digitalRead = (pin) => readHardwareDigitalPin(pin);
+      const analogRead = (pin) => readHardwareAnalogPin(pin);
+      const millis = () => Date.now() - startTime;
+      const micros = () => (Date.now() - startTime) * 1000;
 
-      logSerial('[UNO] กำลังรันโปรแกรม...');
-      await execStatements(setupCode, vars, myToken);
+      const Serial = {
+        begin: () => {},
+        println: (m = '') => { if (myToken === runToken) logSerial(String(m)); },
+        print: (m = '') => { if (myToken === runToken) logSerial(String(m)); }
+      };
 
-      while (isRunning && myToken === runToken) {
-        await execStatements(loopCode, vars, myToken);
-        await new Promise(r => setTimeout(r, 30));
+      let pendingOLED = [];
+      const display = {
+        begin: () => true,
+        clearDisplay: () => {
+          pendingOLED = [];
+          oledCursorX = 0;
+          oledCursorY = 0;
+        },
+        setCursor: (x, y) => {
+          oledCursorX = Number(x) || 0;
+          oledCursorY = Number(y) || 0;
+        },
+        setTextSize: (s) => {
+          oledTextSize = Math.max(1, Number(s) || 1);
+        },
+        setTextColor: () => {},
+        print: (txt = '') => {
+          const str = String(txt);
+          pendingOLED.push({ x: oledCursorX, y: oledCursorY, size: oledTextSize, text: str });
+          oledCursorX += str.length * 6 * oledTextSize;
+        },
+        println: (txt = '') => {
+          const str = String(txt);
+          pendingOLED.push({ x: oledCursorX, y: oledCursorY, size: oledTextSize, text: str });
+          oledCursorX = 0;
+          oledCursorY += 10 * oledTextSize;
+        },
+        display: () => {
+          if (myToken !== runToken) return;
+          oledDrawItems = [...pendingOLED];
+          evaluateCircuit();
+        }
+      };
+
+      const __delay = (ms) => new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (myToken !== runToken) reject(new Error('STOPPED'));
+          else resolve();
+        }, Math.max(15, Number(ms) || 15));
+      });
+
+      const __delayMicro = (us) => __delay(Math.max(15, (Number(us) || 0) / 1000));
+
+      const __yield = () => new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (myToken !== runToken) reject(new Error('STOPPED'));
+          else resolve();
+        }, 0);
+      });
+
+      try {
+        const jsBody = transpileArduinoToAsyncJS(cppEditor.value);
+        const runner = new Function(
+          'HIGH', 'LOW', 'OUTPUT', 'INPUT', 'INPUT_PULLUP',
+          'WHITE', 'BLACK', 'SSD1306_SWITCHCAPVCC',
+          'A0', 'A1', 'A2', 'A3', 'A4', 'A5',
+          'pinMode', 'digitalWrite', 'digitalRead', 'analogRead',
+          'millis', 'micros',
+          'Serial', 'display', '__delay', '__delayMicro', '__yield', '__isAlive',
+          `let __loopGuard = 0;\n${jsBody}\nreturn (async () => { if (typeof setup === 'function') await setup(); while (__isAlive()) { if (typeof loop === 'function') await loop(); await __delay(30); } })();`
+        );
+
+        await runner(
+          HIGH, LOW, OUTPUT, INPUT, INPUT_PULLUP,
+          WHITE, BLACK, SSD1306_SWITCHCAPVCC,
+          A0, A1, A2, A3, A4, A5,
+          pinMode, digitalWrite, digitalRead, analogRead,
+          millis, micros,
+          Serial, display, __delay, __delayMicro, __yield, () => myToken === runToken
+        );
+      } catch (err) {
+        if (err && err.message !== 'STOPPED') {
+          logSerial(`[Error] ${err.message}`, 'text-rose-400', true);
+          stopSimulation();
+        }
       }
     }
 
     function stopSimulation() {
-      isRunning = false;
       runToken++;
+      isRunning = false;
       pinStates = {};
-      oledDrawItems = []; // เพิ่มบรรทัดนี้เพื่อให้หน้าจอเคลียร์เมื่อกดหยุด
       evaluateCircuit();
-
-      btnRun.disabled = false;
-      btnRun.classList.remove('opacity-50', 'cursor-not-allowed');
-      btnStop.disabled = true;
-      btnStop.className = 'px-2.5 py-1 bg-rose-600/40 text-rose-300/50 cursor-not-allowed text-xs font-bold rounded-lg transition';
-      serialStatusDot.className = 'w-2 h-2 rounded-full bg-slate-600';
+      setRunningButtonsUI(false);
+      logSerial('--- หยุดการทำงาน ---', 'text-slate-400', true);
     }
 
     btnRun.addEventListener('click', startSimulation);
     btnStop.addEventListener('click', stopSimulation);
+    topBtnRun.addEventListener('click', startSimulation);
+    topBtnStop.addEventListener('click', stopSimulation);
 
-    // Presets
-    document.getElementById('presetBlink').addEventListener('click', () => {
-      cppEditor.value = `// ตัวอย่างควบคุม Relay 12VAC + LED 5mm (D12) + OLED 6 บรรทัด
-int relay1 = 7;
-int led5mm = 12;
+    // =========================================================================
+    // 8. CODE PRESETS (ALL USING if / else if / else / && / || / !)
+    // =========================================================================
+    document.getElementById('presetLogic').addEventListener('click', () => {
+      cppEditor.value = `// ระบบควบคุมอัจฉริยะด้วยเงื่อนไข if / else if / else และ && / || / !
+// หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้าย (+) ต่อตรง, ขาขวา (-) ผ่าน R 220Ω ลง GND
+int pir1Pin = 2;    // PIR Sensor #1 (D2)
+int pir2Pin = 10;   // PIR Sensor #2 (D10)
+int ldrPin  = 3;    // LDR Module DO (D3: HIGH=มืด, LOW=สว่าง)
+int relay1  = 7;    // Relay CH1 -> หลอดไฟ 12VAC #1
+int relay2  = 6;    // Relay CH2 -> หลอดไฟ 12VAC #2
+int led1    = 12;   // LED 5mm #1 (สีเขียว)
+int led2    = 11;   // LED 5mm #2 (สีแดง)
 
 void setup() {
   Serial.begin(9600);
+  pinMode(pir1Pin, INPUT);
+  pinMode(pir2Pin, INPUT);
+  pinMode(ldrPin, INPUT);
   pinMode(relay1, OUTPUT);
-  pinMode(led5mm, OUTPUT);
+  pinMode(relay2, OUTPUT);
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.println("=== SMART CONTROL ===");
-  display.println("Board : Arduino UNO");
-  display.println("OLED  : 6-Line Mode");
-  display.println("LED   : 5mm (5V DC)");
-  display.println("Relay : 12VAC Load");
+  display.println("=== SMART LOGIC ===");
+  display.println("if / else if / else");
+  display.println("Operators: && || !");
+  display.println("LED1:D12 | LED2:D11");
+  display.println("R 220R on Right (-)");
   display.println("Status: READY");
   display.display();
+  Serial.println("System Ready! กดคลิก PIR1, PIR2 หรือ LDR เพื่อทดสอบเงื่อนไข");
 }
 
 void loop() {
-  digitalWrite(relay1, HIGH);
-  digitalWrite(led5mm, HIGH);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("=== SYSTEM ACTIVE ===");
-  display.println("Relay CH1 : ON");
-  display.println("12VAC Lamp: ON");
-  display.println("LED 5mm   : ON (5V)");
-  display.println("Mode      : AUTO");
-  display.println("Next      : 2 sec...");
-  display.display();
-  delay(2000);
+  bool motion1 = (digitalRead(pir1Pin) == HIGH);
+  bool motion2 = (digitalRead(pir2Pin) == HIGH);
+  bool isDark  = (digitalRead(ldrPin) == HIGH);
 
-  digitalWrite(relay1, LOW);
-  digitalWrite(led5mm, LOW);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("=== SYSTEM STANDBY ===");
-  display.println("Relay CH1 : OFF");
-  display.println("12VAC Lamp: OFF");
-  display.println("LED 5mm   : OFF");
-  display.println("Mode      : AUTO");
-  display.println("Next      : 2 sec...");
-  display.display();
-  delay(2000);
+  // เงื่อนไข 1 (&&): เวลากลางคืน (isDark) และตรวจพบคนทั้ง 2 จุด (motion1 && motion2)
+  if (isDark && (motion1 && motion2)) {
+    digitalWrite(relay1, HIGH);
+    digitalWrite(relay2, HIGH);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, HIGH);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 1: && FULL ON]");
+    display.println("Dark && PIR1 && PIR2");
+    display.println("Lamp1:ON | Lamp2:ON");
+    display.println("LED1(G):ON LED2(R):ON");
+    display.println("Mode : FULL SECURITY");
+    display.println("isDark&&(m1&&m2)=TRUE");
+    display.display();
+    Serial.println("CASE 1: isDark && (motion1 && motion2) -> ALL ON");
+  }
+  // เงื่อนไข 2 (&& และ ||): เวลากลางคืน (isDark) และตรวจพบคนจุดใดจุดหนึ่ง (motion1 || motion2)
+  else if (isDark && (motion1 || motion2)) {
+    digitalWrite(relay1, HIGH);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, LOW);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 2: && + ||]");
+    display.println("Dark && (PIR1 || PIR2)");
+    display.println("Lamp1:ON | Lamp2:OFF");
+    display.println("LED1(G):ON LED2(R):OFF");
+    display.println("Mode : NIGHT ALERT");
+    display.println("isDark&&(m1||m2)=TRUE");
+    display.display();
+    Serial.println("CASE 2: isDark && (motion1 || motion2) -> LAMP1 & LED1 ON");
+  }
+  // เงื่อนไข 3 (! และ ||): ไม่มืด/กลางวัน (!isDark) แต่มีการเคลื่อนไหว (motion1 || motion2)
+  else if (!isDark && (motion1 || motion2)) {
+    digitalWrite(relay1, LOW);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, LOW);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 3: !isDark ||]");
+    display.println("!Dark && (PIR1 || PIR2)");
+    display.println("Lamp1:OFF | Lamp2:OFF");
+    display.println("LED1(G):ON LED2(R):OFF");
+    display.println("Mode : DAY ALERT ONLY");
+    display.println("!isDark&&(m1||m2)=TRUE");
+    display.display();
+    Serial.println("CASE 3: !isDark && (motion1 || motion2) -> DAY ALERT (LED1 ON)");
+  }
+  // เงื่อนไข 4 (else): กรณีอื่นๆ (ไม่มีการเคลื่อนไหว)
+  else {
+    digitalWrite(relay1, LOW);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, HIGH);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("[CASE 4: ELSE IDLE]");
+    display.println("No Motion Detected");
+    display.println("Lamp1:OFF | Lamp2:OFF");
+    display.println("LED1(G):OFF LED2(R):ON");
+    display.println("Mode : STANDBY");
+    display.println("Logic: else (Default)");
+    display.display();
+    Serial.println("CASE 4: else -> STANDBY (LED2 RED ON)");
+  }
+
+  delay(300);
 }`;
       updateLineNumbers();
     });
 
-    document.getElementById('presetMultiCh').addEventListener('click', () => {
-      cppEditor.value = `// คุม Relay หลายแชนเนล (CH1=D7, CH2=D6, CH3=D5) + LED 5mm (D12)
-int ch1 = 7;
-int ch2 = 6;
-int ch3 = 5;
-int led5mm = 12;
-
-void setup() {
-  Serial.begin(9600);
-  pinMode(ch1, OUTPUT);
-  pinMode(ch2, OUTPUT);
-  pinMode(ch3, OUTPUT);
-  pinMode(led5mm, OUTPUT);
-}
-
-void loop() {
-  digitalWrite(ch1, HIGH);
-  digitalWrite(ch2, LOW);
-  digitalWrite(ch3, LOW);
-  digitalWrite(led5mm, HIGH);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("MULTI-CHANNEL MODE");
-  display.println("CH1 (Lamp) : ON");
-  display.println("CH2 (Fan1) : OFF");
-  display.println("CH3 (Fan2) : OFF");
-  display.println("LED 5mm    : ON");
-  display.println("Step 1/2...");
-  display.display();
-  delay(2000);
-
-  digitalWrite(ch1, LOW);
-  digitalWrite(ch2, HIGH);
-  digitalWrite(ch3, HIGH);
-  digitalWrite(led5mm, LOW);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("MULTI-CHANNEL MODE");
-  display.println("CH1 (Lamp) : OFF");
-  display.println("CH2 (Fan1) : ON");
-  display.println("CH3 (Fan2) : ON");
-  display.println("LED 5mm    : OFF");
-  display.println("Step 2/2...");
-  display.display();
-  delay(2000);
-}`;
-      updateLineNumbers();
-    });
-
-    document.getElementById('presetSensor').addEventListener('click', () => {
-      cppEditor.value = `// ตัวอย่างแสดงสถานะครบ 6 บรรทัดบน OLED
+    document.getElementById('presetCycle').addEventListener('click', () => {
+      cppEditor.value = `// ทดสอบสลับการทำงานอัตโนมัติด้วยเงื่อนไข if / else if / else และ ! / || / &&
 int relay1 = 7;
-int led5mm = 12;
+int relay2 = 6;
+int led1 = 12;
+int led2 = 11;
+int step = 1;
+bool emergencyStop = false;
 
 void setup() {
   Serial.begin(9600);
   pinMode(relay1, OUTPUT);
-  pinMode(led5mm, OUTPUT);
+  pinMode(relay2, OUTPUT);
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
 }
 
 void loop() {
-  digitalWrite(relay1, HIGH);
-  digitalWrite(led5mm, HIGH);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("1. MODE: NIGHT AUTO");
-  display.println("2. PIR1: ACTIVE");
-  display.println("3. LDR : DARK");
-  display.println("4. LED : 5mm ON");
-  display.println("5. LAMP: 12VAC ON");
-  display.println("6. SYS : OK");
-  display.display();
-  delay(2500);
+  if (!emergencyStop && step == 1) {
+    digitalWrite(relay1, HIGH);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, LOW);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("== AUTO CYCLE MODE ==");
+    display.println("Step 1: !stop && s==1");
+    display.println("Lamp 12V#1 : ON");
+    display.println("Lamp 12V#2 : OFF");
+    display.println("LED 5mm #1 : ON (GRN)");
+    display.println("LED 5mm #2 : OFF");
+    display.display();
+    Serial.println("Step 1: Lamp1=ON, LED1=ON");
+  }
+  else if (!emergencyStop && step == 2) {
+    digitalWrite(relay1, LOW);
+    digitalWrite(relay2, HIGH);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, HIGH);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("== AUTO CYCLE MODE ==");
+    display.println("Step 2: !stop && s==2");
+    display.println("Lamp 12V#1 : OFF");
+    display.println("Lamp 12V#2 : ON");
+    display.println("LED 5mm #1 : OFF");
+    display.println("LED 5mm #2 : ON (RED)");
+    display.display();
+    Serial.println("Step 2: Lamp2=ON, LED2=ON");
+  }
+  else if (step == 3 || step == 4) {
+    digitalWrite(relay1, HIGH);
+    digitalWrite(relay2, HIGH);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, HIGH);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("== AUTO CYCLE MODE ==");
+    display.println("Step 3: s==3 || s==4");
+    display.println("Lamp 12V#1 : ON");
+    display.println("Lamp 12V#2 : ON");
+    display.println("LED 5mm #1 : ON (GRN)");
+    display.println("LED 5mm #2 : ON (RED)");
+    display.display();
+    Serial.println("Step 3: BOTH Lamps & LEDs ON");
+  }
+  else {
+    digitalWrite(relay1, LOW);
+    digitalWrite(relay2, LOW);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, LOW);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("== AUTO CYCLE MODE ==");
+    display.println("Step 4: else (ALL OFF)");
+    display.println("Lamp 12V#1 : OFF");
+    display.println("Lamp 12V#2 : OFF");
+    display.println("LED 5mm #1 : OFF");
+    display.println("LED 5mm #2 : OFF");
+    display.display();
+    Serial.println("Step 4 (else): ALL OFF");
+  }
 
-  digitalWrite(relay1, LOW);
-  digitalWrite(led5mm, LOW);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("1. MODE: DAYLIGHT");
-  display.println("2. PIR1: IDLE");
-  display.println("3. LDR : BRIGHT");
-  display.println("4. LED : 5mm OFF");
-  display.println("5. LAMP: 12VAC OFF");
-  display.println("6. SYS : STANDBY");
-  display.display();
-  delay(2500);
+  step++;
+  if (step > 5) {
+    step = 1;
+  }
+  delay(1800);
 }`;
       updateLineNumbers();
     });
 
-    // Init
-    buildRelayBoard(1);
+    document.getElementById('presetTruth').addEventListener('click', () => {
+      cppEditor.value = `// ทดสอบตารางความจริง (Truth Table) ของ PIR1 (D2) และ LDR (D3)
+// ใช้ if / else if / else ร่วมกับ && และ !
+int pir1 = 2;
+int ldr  = 3;
+int relay1 = 7;
+int led1 = 12;
+int led2 = 11;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(pir1, INPUT);
+  pinMode(ldr, INPUT);
+  pinMode(relay1, OUTPUT);
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+}
+
+void loop() {
+  bool p = (digitalRead(pir1) == HIGH);
+  bool d = (digitalRead(ldr) == HIGH);
+
+  if (p && d) {
+    // 1 && 1 -> เปิดไฟ 12VAC และ LED1
+    digitalWrite(relay1, HIGH);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, LOW);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("TRUTH TABLE: p && d");
+    display.println("PIR1=1, LDR(Dark)=1");
+    display.println("Relay CH1 : ON");
+    display.println("LED1(GRN) : ON");
+    display.println("LED2(RED) : OFF");
+    display.println("Result    : TRUE");
+    display.display();
+    Serial.println("p && d -> Relay ON, LED1 ON");
+  }
+  else if (p && !d) {
+    // 1 && !0 -> กลางวันมีคนเดิน เปิดเฉพาะ LED1
+    digitalWrite(relay1, LOW);
+    digitalWrite(led1, HIGH);
+    digitalWrite(led2, LOW);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("TRUTH TABLE: p && !d");
+    display.println("PIR1=1, LDR(Dark)=0");
+    display.println("Relay CH1 : OFF");
+    display.println("LED1(GRN) : ON");
+    display.println("LED2(RED) : OFF");
+    display.println("Result    : DAY DETECT");
+    display.display();
+    Serial.println("p && !d -> LED1 ON");
+  }
+  else if (!p && d) {
+    // !0 && 1 -> กลางคืนไม่มีคน เปิดเฉพาะ LED2
+    digitalWrite(relay1, LOW);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, HIGH);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("TRUTH TABLE: !p && d");
+    display.println("PIR1=0, LDR(Dark)=1");
+    display.println("Relay CH1 : OFF");
+    display.println("LED1(GRN) : OFF");
+    display.println("LED2(RED) : ON");
+    display.println("Result    : NIGHT IDLE");
+    display.display();
+    Serial.println("!p && d -> LED2 ON");
+  }
+  else {
+    // !0 && !0 -> กลางวันไม่มีคน ปิดทั้งหมด
+    digitalWrite(relay1, LOW);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, LOW);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("TRUTH TABLE: else");
+    display.println("PIR1=0, LDR(Dark)=0");
+    display.println("Relay CH1 : OFF");
+    display.println("LED1(GRN) : OFF");
+    display.println("LED2(RED) : OFF");
+    display.println("Result    : ALL OFF");
+    display.display();
+    Serial.println("else (!p && !d) -> ALL OFF");
+  }
+  delay(250);
+}`;
+      updateLineNumbers();
+    });
+
+    // Initialize default 2-Ch Relay board & sync UI
+    syncChannelButtons(2);
+    buildRelayBoard(2);
   </script>
 </body>
 </html>
