@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arduino Uno R3 + OLED (SSD1306) + 2×LED 5mm (R220Ω ด้านขวา) + 2×12VAC Lamp Simulator</title>
+  <title>Arduino Uno R3 + OLED (SSD1306) + 2×LED 5mm (R220Ω ด้านขวา +) + 2×12VAC Lamp Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -116,7 +116,7 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-sm font-bold text-white leading-tight">Arduino Uno R3 + OLED (SSD1306) + 2×LED 5mm (R220Ω ด้านขวา) + 2×12VAC Lamp Simulator</h1>
+        <h1 class="text-sm font-bold text-white leading-tight">Arduino Uno R3 + OLED (SSD1306) + 2×LED 5mm (R220Ω ด้านขวา +) + 2×12VAC Lamp Simulator</h1>
       </div>
     </div>
 
@@ -268,12 +268,12 @@
             </g>
 
             <!-- =========================================================================
-                 1A. หลอด LED 5mm #1 (สีเขียว - ตัวต้านทาน 220Ω อยู่ด้านขวา ขา - / ซ้ายไม่มีตัวต้านทาน)
+                 1A. หลอด LED 5mm #1 (สีเขียว - ซ้ายสีดำ GND (-), ขวาสีแดง + ผ่าน R 220Ω)
                  ========================================================================= -->
             <g id="led-5mm-1" transform="translate(278, 52)" filter="url(#dropShadow)">
               <rect x="0" y="0" width="92" height="156" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="2" />
               <text x="46" y="16" font-size="9.5" font-weight="bold" fill="#86efac" text-anchor="middle">LED 5mm #1</text>
-              <text x="46" y="27" font-size="7.5" fill="#94a3b8" text-anchor="middle">R 220Ω ด้านขวา (-)</text>
+              <text x="46" y="27" font-size="7.5" fill="#94a3b8" text-anchor="middle">R 220Ω ด้านขวา (+)</text>
 
               <!-- Glow Effect -->
               <circle id="led1-glow" class="led-transition" cx="46" cy="56" r="28" fill="url(#ledGreenGlow)" opacity="0" pointer-events="none" />
@@ -282,11 +282,11 @@
               <path id="led1-dome" class="led-transition" d="M 33 70 V 52 A 13 13 0 0 1 59 52 V 70 Z" fill="#14532d" stroke="#86efac" stroke-width="1.8" />
               <rect x="30" y="70" width="32" height="5" rx="1.5" fill="#166534" stroke="#86efac" stroke-width="1" />
 
-              <!-- Leg + (ด้านซ้าย: ต่อตรง ไม่มีตัวต้านทาน) -->
-              <line x1="36" y1="75" x2="36" y2="128" stroke="#cbd5e1" stroke-width="2" />
+              <!-- Leg - GND (ด้านซ้าย: ขาสีดำ ต่อตรงลง GND) -->
+              <line x1="36" y1="75" x2="36" y2="128" stroke="#64748b" stroke-width="2" />
 
-              <!-- Leg - (ด้านขวา: ต่ออนุกรมตัวต้านทาน 220Ω) -->
-              <line x1="58" y1="75" x2="58" y2="83" stroke="#94a3b8" stroke-width="2" />
+              <!-- Leg + (ด้านขวา: ขาสีแดง ต่ออนุกรมตัวต้านทาน 220Ω) -->
+              <line x1="58" y1="75" x2="58" y2="83" stroke="#fca5a5" stroke-width="2" />
               <!-- Resistor 220Ω (Red-Red-Brown-Gold) -->
               <rect x="53" y="83" width="10" height="24" rx="2.5" fill="#e6c28b" stroke="#92400e" stroke-width="1" />
               <rect x="53" y="87" width="10" height="2.8" fill="#dc2626" />
@@ -294,21 +294,21 @@
               <rect x="53" y="97" width="10" height="2.8" fill="#78350f" />
               <rect x="53" y="102" width="10" height="2.2" fill="#eab308" />
               <text x="77" y="98" font-size="7" font-weight="bold" fill="#fde047" text-anchor="middle">220Ω</text>
-              <line x1="58" y1="107" x2="58" y2="128" stroke="#94a3b8" stroke-width="2" />
+              <line x1="58" y1="107" x2="58" y2="128" stroke="#fca5a5" stroke-width="2" />
 
-              <!-- Pin Header -->
-              <rect x="16" y="128" width="60" height="22" rx="3" fill="#0f172a" />
-              <text x="36" y="125" font-size="8" font-weight="bold" fill="#fca5a5" text-anchor="middle">+</text>
-              <text x="58" y="125" font-size="8" font-weight="bold" fill="#cbd5e1" text-anchor="middle">-</text>
+              <!-- Pin Header (ซ้ายช่องสีดำ GND, ขวาช่องสีแดง +) -->
+              <rect x="16" y="128" width="60" height="22" rx="3" fill="#475569" stroke="#64748b" stroke-width="1" />
+              <text x="36" y="125" font-size="7.5" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
+              <text x="58" y="125" font-size="8.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">+</text>
             </g>
 
             <!-- =========================================================================
-                 1B. หลอด LED 5mm #2 (สีแดง - ตัวต้านทาน 220Ω อยู่ด้านขวา ขา - / ซ้ายไม่มีตัวต้านทาน)
+                 1B. หลอด LED 5mm #2 (สีแดง - ซ้ายสีดำ GND (-), ขวาสีแดง + ผ่าน R 220Ω)
                  ========================================================================= -->
             <g id="led-5mm-2" transform="translate(378, 52)" filter="url(#dropShadow)">
               <rect x="0" y="0" width="92" height="156" rx="8" fill="#1e293b" stroke="#ef4444" stroke-width="2" />
               <text x="46" y="16" font-size="9.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">LED 5mm #2</text>
-              <text x="46" y="27" font-size="7.5" fill="#94a3b8" text-anchor="middle">R 220Ω ด้านขวา (-)</text>
+              <text x="46" y="27" font-size="7.5" fill="#94a3b8" text-anchor="middle">R 220Ω ด้านขวา (+)</text>
 
               <!-- Glow Effect -->
               <circle id="led2-glow" class="led-transition" cx="46" cy="56" r="28" fill="url(#ledRedGlow)" opacity="0" pointer-events="none" />
@@ -317,11 +317,11 @@
               <path id="led2-dome" class="led-transition" d="M 33 70 V 52 A 13 13 0 0 1 59 52 V 70 Z" fill="#7f1d1d" stroke="#fca5a5" stroke-width="1.8" />
               <rect x="30" y="70" width="32" height="5" rx="1.5" fill="#991b1b" stroke="#fca5a5" stroke-width="1" />
 
-              <!-- Leg + (ด้านซ้าย: ต่อตรง ไม่มีตัวต้านทาน) -->
-              <line x1="36" y1="75" x2="36" y2="128" stroke="#cbd5e1" stroke-width="2" />
+              <!-- Leg - GND (ด้านซ้าย: ขาสีดำ ต่อตรงลง GND) -->
+              <line x1="36" y1="75" x2="36" y2="128" stroke="#64748b" stroke-width="2" />
 
-              <!-- Leg - (ด้านขวา: ต่ออนุกรมตัวต้านทาน 220Ω) -->
-              <line x1="58" y1="75" x2="58" y2="83" stroke="#94a3b8" stroke-width="2" />
+              <!-- Leg + (ด้านขวา: ขาสีแดง ต่ออนุกรมตัวต้านทาน 220Ω) -->
+              <line x1="58" y1="75" x2="58" y2="83" stroke="#fca5a5" stroke-width="2" />
               <!-- Resistor 220Ω (Red-Red-Brown-Gold) -->
               <rect x="53" y="83" width="10" height="24" rx="2.5" fill="#e6c28b" stroke="#92400e" stroke-width="1" />
               <rect x="53" y="87" width="10" height="2.8" fill="#dc2626" />
@@ -329,12 +329,12 @@
               <rect x="53" y="97" width="10" height="2.8" fill="#78350f" />
               <rect x="53" y="102" width="10" height="2.2" fill="#eab308" />
               <text x="77" y="98" font-size="7" font-weight="bold" fill="#fde047" text-anchor="middle">220Ω</text>
-              <line x1="58" y1="107" x2="58" y2="128" stroke="#94a3b8" stroke-width="2" />
+              <line x1="58" y1="107" x2="58" y2="128" stroke="#fca5a5" stroke-width="2" />
 
-              <!-- Pin Header -->
-              <rect x="16" y="128" width="60" height="22" rx="3" fill="#0f172a" />
-              <text x="36" y="125" font-size="8" font-weight="bold" fill="#fca5a5" text-anchor="middle">+</text>
-              <text x="58" y="125" font-size="8" font-weight="bold" fill="#cbd5e1" text-anchor="middle">-</text>
+              <!-- Pin Header (ซ้ายช่องสีดำ GND, ขวาช่องสีแดง +) -->
+              <rect x="16" y="128" width="60" height="22" rx="3" fill="#475569" stroke="#64748b" stroke-width="1" />
+              <text x="36" y="125" font-size="7.5" font-weight="bold" fill="#cbd5e1" text-anchor="middle">GND</text>
+              <text x="58" y="125" font-size="8.5" font-weight="bold" fill="#fca5a5" text-anchor="middle">+</text>
             </g>
 
             <!-- =========================================================================
@@ -661,7 +661,7 @@
 #define OLED_RESET    -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, OLED_RESET);
 
-// หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้าย (+) ต่อตรง, ขาขวา (-) ผ่าน R 220Ω ลง GND
+// หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้ายสีดำ (-) ต่อ GND, ขาขวาสีแดง (+) ผ่าน R 220Ω รับสัญญาณ
 int pir1Pin = 2;    // PIR Sensor #1 (D2)
 int pir2Pin = 10;   // PIR Sensor #2 (D10)
 int ldrPin  = 3;    // LDR Module DO (D3: HIGH=มืด, LOW=สว่าง)
@@ -695,7 +695,7 @@ void setup() {
   display.setCursor(0, 30);
   display.println("LED1:D12 | LED2:D11");
   display.setCursor(0, 40);
-  display.println("R 220R on Right (-)");
+  display.println("R 220R on Right (+)");
   display.setCursor(0, 50);
   display.println("Status: READY");
   display.display();
@@ -869,13 +869,13 @@ void loop() {
       { id: 'OLED_SCL', component: 'OLED', name: 'OLED SCL', x: 28 + 138, y: 52 + 139, color: '#fde047', type: 'header' },
       { id: 'OLED_SDA', component: 'OLED', name: 'OLED SDA', x: 28 + 171, y: 52 + 139, color: '#86efac', type: 'header' },
 
-      // LED 5mm #1 (offset: 278, 52) -> ซ้าย (+ ตรง), ขวา (- ผ่าน R 220Ω)
-      { id: 'LED1_POS', component: 'LED 5mm #1', name: 'LED1 (+ ด้านซ้าย)',          x: 278 + 36, y: 52 + 139, color: '#f87171', type: 'header' },
-      { id: 'LED1_NEG', component: 'LED 5mm #1', name: 'LED1 (- ด้านขวา R220Ω GND)', x: 278 + 58, y: 52 + 139, color: '#94a3b8', type: 'header' },
+      // LED 5mm #1 (offset: 278, 52) -> ซ้ายช่องสีดำ (- GND), ขวาช่องสีแดง (+ ผ่าน R 220Ω)
+      { id: 'LED1_NEG', component: 'LED 5mm #1', name: 'LED1 (- ด้านซ้าย GND)',   x: 278 + 36, y: 52 + 139, color: '#000000', fillColor: '#090d16', type: 'header' },
+      { id: 'LED1_POS', component: 'LED 5mm #1', name: 'LED1 (+ ด้านขวา R220Ω)', x: 278 + 58, y: 52 + 139, color: '#ef4444', fillColor: '#991b1b', type: 'header' },
 
-      // LED 5mm #2 (offset: 378, 52) -> ซ้าย (+ ตรง), ขวา (- ผ่าน R 220Ω)
-      { id: 'LED2_POS', component: 'LED 5mm #2', name: 'LED2 (+ ด้านซ้าย)',          x: 378 + 36, y: 52 + 139, color: '#f87171', type: 'header' },
-      { id: 'LED2_NEG', component: 'LED 5mm #2', name: 'LED2 (- ด้านขวา R220Ω GND)', x: 378 + 58, y: 52 + 139, color: '#94a3b8', type: 'header' },
+      // LED 5mm #2 (offset: 378, 52) -> ซ้ายช่องสีดำ (- GND), ขวาช่องสีแดง (+ ผ่าน R 220Ω)
+      { id: 'LED2_NEG', component: 'LED 5mm #2', name: 'LED2 (- ด้านซ้าย GND)',   x: 378 + 36, y: 52 + 139, color: '#000000', fillColor: '#090d16', type: 'header' },
+      { id: 'LED2_POS', component: 'LED 5mm #2', name: 'LED2 (+ ด้านขวา R220Ω)', x: 378 + 58, y: 52 + 139, color: '#ef4444', fillColor: '#991b1b', type: 'header' },
 
       // Arduino Uno R3 Top Header (offset: 68, 265)
       { id: 'UNO_D13', component: 'Arduino', name: 'D13', x: 68 + 96,  y: 265 + 24, color: '#fde047', labelPos: 'bottom' },
@@ -1231,7 +1231,7 @@ void loop() {
           rect.setAttribute('width', '9');
           rect.setAttribute('height', '9');
           rect.setAttribute('rx', '1.5');
-          rect.setAttribute('fill', '#1e293b');
+          rect.setAttribute('fill', pin.fillColor || '#1e293b');
           rect.setAttribute('stroke', pin.color);
           rect.setAttribute('stroke-width', '1.8');
           g.appendChild(rect);
@@ -1525,7 +1525,7 @@ void loop() {
           ? 'px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40'
           : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700');
 
-      // LED 5mm #1 (Green: ขาซ้าย + รับไฟ HIGH, ขาขวา - ผ่าน R220Ω ลง GND)
+      // LED 5mm #1 (Green: ช่องซ้ายสีดำ GND (-), ช่องขวาสีแดง + ผ่าน R220Ω รับสัญญาณ HIGH)
       const led1On = isNodeHigh5V(dcAdj, 'LED1_POS') && isConnected(dcAdj, 'LED1_NEG', 'UNO_GND1');
       document.getElementById('led1-glow').setAttribute('opacity', led1On ? '0.95' : '0');
       document.getElementById('led1-dome').setAttribute('fill', led1On ? '#4ade80' : '#14532d');
@@ -1535,7 +1535,7 @@ void loop() {
         ? 'px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
         : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
 
-      // LED 5mm #2 (Red: ขาซ้าย + รับไฟ HIGH, ขาขวา - ผ่าน R220Ω ลง GND)
+      // LED 5mm #2 (Red: ช่องซ้ายสีดำ GND (-), ช่องขวาสีแดง + ผ่าน R220Ω รับสัญญาณ HIGH)
       const led2On = isNodeHigh5V(dcAdj, 'LED2_POS') && isConnected(dcAdj, 'LED2_NEG', 'UNO_GND1');
       document.getElementById('led2-glow').setAttribute('opacity', led2On ? '0.95' : '0');
       document.getElementById('led2-dome').setAttribute('fill', led2On ? '#f87171' : '#7f1d1d');
@@ -1699,13 +1699,13 @@ void loop() {
         { id: 'aw3', from: 'OLED_SCL', to: 'UNO_A5',   color: '#a855f7', waypoints: [{ x: 166, y: 230 }, { x: 435, y: 230 }, { x: 435, y: 525 }, { x: 362, y: 525 }] },
         { id: 'aw4', from: 'OLED_SDA', to: 'UNO_A4',   color: '#22c55e', waypoints: [{ x: 199, y: 238 }, { x: 425, y: 238 }, { x: 425, y: 515 }, { x: 346, y: 515 }] },
 
-        // LED 5mm #1 (ซ้าย + -> D12, ขวา - ผ่าน R220Ω -> GND)
-        { id: 'aw5', from: 'LED1_POS', to: 'UNO_D12',     color: '#22c55e', waypoints: [{ x: 314, y: 215 }, { x: 180, y: 215 }] },
-        { id: 'aw6', from: 'LED1_NEG', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 336, y: 245 }, { x: 368, y: 245 }] },
+        // LED 5mm #1 (ซ้ายสีดำ GND -> UNO_GND_TOP, ขวาสีแดง + R220Ω -> UNO_D12)
+        { id: 'aw5', from: 'LED1_NEG', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 314, y: 242 }, { x: 368, y: 242 }] },
+        { id: 'aw6', from: 'LED1_POS', to: 'UNO_D12',     color: '#22c55e', waypoints: [{ x: 336, y: 215 }, { x: 180, y: 215 }] },
 
-        // LED 5mm #2 (ซ้าย + -> D11, ขวา - ผ่าน R220Ω -> GND)
-        { id: 'aw7', from: 'LED2_POS', to: 'UNO_D11',     color: '#ef4444', waypoints: [{ x: 414, y: 218 }, { x: 196, y: 218 }] },
-        { id: 'aw8', from: 'LED2_NEG', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 436, y: 252 }, { x: 368, y: 252 }] },
+        // LED 5mm #2 (ซ้ายสีดำ GND -> UNO_GND_TOP, ขวาสีแดง + R220Ω -> UNO_D11)
+        { id: 'aw7', from: 'LED2_NEG', to: 'UNO_GND_TOP', color: '#1e293b', waypoints: [{ x: 414, y: 248 }, { x: 368, y: 248 }] },
+        { id: 'aw8', from: 'LED2_POS', to: 'UNO_D11',     color: '#ef4444', waypoints: [{ x: 436, y: 220 }, { x: 196, y: 220 }] },
 
         // Sensors: PIR #1 (D2), PIR #2 (D10), LDR (DO->D3, AO->A0)
         { id: 'aws1', from: 'PIR1_VCC', to: 'UNO_5V',   color: '#ef4444', waypoints: [{ x: 72, y: 565 }, { x: 206, y: 565 }] },
@@ -2021,7 +2021,6 @@ void loop() {
             }
             if (line.length > 0) {
               if (textWrap) {
-                const maxCharsPerLine = Math.max(1, Math.floor((128 - cx) / (6 * tSize)));
                 let remaining = line;
                 while (remaining.length > 0) {
                   const cap = Math.max(1, Math.floor((128 - cx) / (6 * tSize)));
@@ -2247,7 +2246,7 @@ void loop() {
 #define OLED_RESET    -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้าย (+) ต่อตรง, ขาขวา (-) ผ่าน R 220Ω ลง GND
+// หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้ายสีดำ (-) ต่อ GND, ขาขวาสีแดง (+) ผ่าน R 220Ω รับสัญญาณ
 int pir1Pin = 2;    // PIR Sensor #1 (D2)
 int pir2Pin = 10;   // PIR Sensor #2 (D10)
 int ldrPin  = 3;    // LDR Module DO (D3: HIGH=มืด, LOW=สว่าง)
@@ -2281,7 +2280,7 @@ void setup() {
   display.setCursor(0, 30);
   display.println("LED1:D12 | LED2:D11");
   display.setCursor(0, 40);
-  display.println("R 220R on Right (-)");
+  display.println("R 220R on Right (+)");
   display.setCursor(0, 50);
   display.println("Status: READY");
   display.display();
