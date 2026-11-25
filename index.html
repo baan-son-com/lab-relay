@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arduino Uno R3 + OLED (6-Line) + Dual LED 5mm (Right Resistor) + Dual 12VAC Lamp Simulator</title>
+  <title>Arduino Uno R3 + OLED (SSD1306) + Dual LED 5mm (Right R220Ω) + Dual 12VAC Lamp Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -105,7 +105,7 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-sm font-bold text-white leading-tight">Arduino Uno R3 + OLED (6 บรรทัด) + 2×LED 5mm (R220Ω ด้านขวา) + 2×12VAC Lamp Simulator</h1>
+        <h1 class="text-sm font-bold text-white leading-tight">Arduino Uno R3 + OLED (SSD1306) + 2×LED 5mm (R220Ω ด้านขวา) + 2×12VAC Lamp Simulator</h1>
       </div>
     </div>
 
@@ -120,8 +120,8 @@
       <!-- Relay Channel Mode Selector -->
       <div class="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 gap-0.5" title="เลือกจำนวนแชนเนลของโมดูล Relay">
         <span class="text-[11px] text-slate-300 px-1.5 font-medium">Relay:</span>
-        <button id="chMode1" data-ch="1" class="ch-mode-btn px-2 py-1 rounded text-xs font-bold bg-teal-600 text-white transition">1 Ch</button>
-        <button id="chMode2" data-ch="2" class="ch-mode-btn px-2 py-1 rounded text-xs font-bold text-slate-300 hover:bg-slate-700 transition">2 Ch</button>
+        <button id="chMode1" data-ch="1" class="ch-mode-btn px-2 py-1 rounded text-xs font-bold text-slate-300 hover:bg-slate-700 transition">1 Ch</button>
+        <button id="chMode2" data-ch="2" class="ch-mode-btn px-2 py-1 rounded text-xs font-bold bg-teal-600 text-white transition">2 Ch</button>
         <button id="chMode4" data-ch="4" class="ch-mode-btn px-2 py-1 rounded text-xs font-bold text-slate-300 hover:bg-slate-700 transition">4 Ch</button>
       </div>
 
@@ -228,13 +228,13 @@
 
             <!-- Zone Dividers & Labels -->
             <rect x="16" y="16" width="464" height="788" rx="12" fill="#0ea5e9" fill-opacity="0.04" stroke="#0284c7" stroke-opacity="0.28" stroke-dasharray="6 4" />
-            <text x="32" y="38" font-size="12" font-weight="bold" fill="#0369a1">ฝั่งควบคุมแรงดันต่ำ (5V DC CONTROL, OLED 6-LINE, 2×LED 5mm &amp; SENSORS)</text>
+            <text x="32" y="38" font-size="12" font-weight="bold" fill="#0369a1">ฝั่งควบคุมแรงดันต่ำ (5V DC CONTROL, OLED SSD1306, 2×LED 5mm &amp; SENSORS)</text>
 
             <rect x="496" y="16" width="928" height="788" rx="12" fill="#f59e0b" fill-opacity="0.05" stroke="#d97706" stroke-opacity="0.3" stroke-dasharray="6 4" />
             <text x="514" y="38" font-size="12" font-weight="bold" fill="#b45309">ฝั่งกำลังไฟฟ้ากระแสสลับ (RELAY MODULE, 220VAC/12VAC &amp; 12VAC LOADS)</text>
 
             <!-- =========================================================================
-                 0. OLED 0.96" I2C DISPLAY (6-Line Layout)
+                 0. OLED 0.96" I2C DISPLAY (128x64 Adafruit_SSD1306)
                  ========================================================================= -->
             <g id="oled-display" transform="translate(28, 52)" filter="url(#dropShadow)">
               <rect x="0" y="0" width="242" height="156" rx="8" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2.5" />
@@ -615,10 +615,10 @@
     <!-- DRAGGABLE SPLIT RESIZER -->
     <div id="splitResizer" class="block" title="ลากซ้าย-ขวาเพื่อปรับขนาด"></div>
 
-    <!-- RIGHT: Arduino C++ Code Editor (Open by default so Run is immediately accessible) -->
-    <aside id="codePane" class="flex bg-slate-900 flex-col border-l border-slate-800 shrink-0" style="width: 460px;">
+    <!-- RIGHT: Arduino C++ Code Editor -->
+    <aside id="codePane" class="flex bg-slate-900 flex-col border-l border-slate-800 shrink-0" style="width: 470px;">
       <div class="px-3 py-2 bg-slate-800/95 border-b border-slate-700 flex items-center justify-between gap-2 shrink-0">
-        <span class="px-2 py-0.5 rounded bg-teal-600/30 text-teal-300 border border-teal-500/40 text-xs font-bold code-font">smart_logic_control.ino</span>
+        <span class="px-2 py-0.5 rounded bg-teal-600/30 text-teal-300 border border-teal-500/40 text-xs font-bold code-font">sketch_arduino_oled.ino</span>
         <div class="flex items-center gap-1.5">
           <button id="btnRun" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition">▶ รัน (Run)</button>
           <button id="btnStop" disabled class="px-2.5 py-1 bg-rose-600/40 text-rose-300/50 cursor-not-allowed text-xs font-bold rounded-lg transition">■ หยุด</button>
@@ -628,10 +628,10 @@
 
       <!-- Preset Selector -->
       <div class="px-3 py-1.5 bg-slate-950/60 border-b border-slate-800 flex flex-wrap items-center gap-1.5 text-xs shrink-0">
-        <span class="text-slate-400">ตัวอย่างโค้ด:</span>
+        <span class="text-slate-400">ตัวอย่าง:</span>
         <button id="presetLogic" class="px-2 py-0.5 rounded bg-teal-900/70 hover:bg-teal-800 text-teal-200 border border-teal-600/60">1. if / else if && || !</button>
-        <button id="presetCycle" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">2. สลับไฟอัตโนมัติ (if/else)</button>
-        <button id="presetTruth" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">3. ตารางความจริง && / !</button>
+        <button id="presetOledRaw" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">2. ทดสอบ OLED (SSD1306)</button>
+        <button id="presetCycle" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">3. สลับหลอด 12VAC + LED</button>
       </div>
 
       <!-- Editor -->
@@ -641,7 +641,15 @@
           id="cppEditor"
           spellcheck="false"
           class="flex-1 p-3 bg-transparent text-emerald-300 code-font text-xs leading-6 focus:outline-none resize-none whitespace-pre overflow-auto"
-        >// ระบบควบคุมอัจฉริยะด้วยเงื่อนไข if / else if / else และ && / || / !
+        >#include &lt;Wire.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, OLED_RESET);
+
 // หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้าย (+) ต่อตรง, ขาขวา (-) ผ่าน R 220Ω ลง GND
 int pir1Pin = 2;    // PIR Sensor #1 (D2)
 int pir2Pin = 10;   // PIR Sensor #2 (D10)
@@ -661,16 +669,26 @@ void setup() {
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
 
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;);
+  }
   display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.println("=== SMART LOGIC ===");
+  display.setCursor(0, 10);
   display.println("if / else if / else");
-  display.println("Operators: && || !");
+  display.setCursor(0, 20);
+  display.println("Operators: &amp;&amp; || !");
+  display.setCursor(0, 30);
   display.println("LED1:D12 | LED2:D11");
+  display.setCursor(0, 40);
   display.println("R 220R on Right (-)");
+  display.setCursor(0, 50);
   display.println("Status: READY");
   display.display();
-  Serial.println("System Ready! กดคลิก PIR1, PIR2 หรือ LDR เพื่อทดสอบเงื่อนไข");
+  Serial.println("System Ready! คลิกทดสอบ PIR1, PIR2 หรือ LDR ได้เลย");
 }
 
 void loop() {
@@ -678,61 +696,64 @@ void loop() {
   bool motion2 = (digitalRead(pir2Pin) == HIGH);
   bool isDark  = (digitalRead(ldrPin) == HIGH);
 
-  // เงื่อนไข 1 (&&): เวลากลางคืน (isDark) และตรวจพบคนทั้ง 2 จุด (motion1 && motion2)
-  if (isDark && (motion1 && motion2)) {
+  // เงื่อนไข 1 (&amp;&amp;): มืด และตรวจพบคนทั้ง 2 จุด
+  if (isDark &amp;&amp; (motion1 &amp;&amp; motion2)) {
     digitalWrite(relay1, HIGH);
     digitalWrite(relay2, HIGH);
     digitalWrite(led1, HIGH);
     digitalWrite(led2, HIGH);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 1: && FULL ON]");
-    display.println("Dark && PIR1 && PIR2");
-    display.println("Lamp1:ON | Lamp2:ON");
-    display.println("LED1(G):ON LED2(R):ON");
-    display.println("Mode : FULL SECURITY");
-    display.println("isDark&&(m1&&m2)=TRUE");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 1: &amp;&amp; FULL ON]");
+    display.setCursor(0, 10); display.print("Dark &amp;&amp; PIR1 &amp;&amp; PIR2");
+    display.setCursor(0, 20); display.print("Lamp1:ON | Lamp2:ON");
+    display.setCursor(0, 30); display.print("LED1(G):ON LED2(R):ON");
+    display.setCursor(0, 40); display.print("Mode : FULL SECURITY");
+    display.setCursor(0, 50); display.print("isDark&amp;&amp;(m1&amp;&amp;m2)=TRUE");
     display.display();
-    Serial.println("CASE 1: isDark && (motion1 && motion2) -> ALL ON");
+    Serial.println("CASE 1: isDark &amp;&amp; (motion1 &amp;&amp; motion2) -> ALL ON");
   }
-  // เงื่อนไข 2 (&& และ ||): เวลากลางคืน (isDark) และตรวจพบคนจุดใดจุดหนึ่ง (motion1 || motion2)
-  else if (isDark && (motion1 || motion2)) {
+  // เงื่อนไข 2 (&amp;&amp; และ ||): มืด และตรวจพบคนจุดใดจุดหนึ่ง
+  else if (isDark &amp;&amp; (motion1 || motion2)) {
     digitalWrite(relay1, HIGH);
     digitalWrite(relay2, LOW);
     digitalWrite(led1, HIGH);
     digitalWrite(led2, LOW);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 2: && + ||]");
-    display.println("Dark && (PIR1 || PIR2)");
-    display.println("Lamp1:ON | Lamp2:OFF");
-    display.println("LED1(G):ON LED2(R):OFF");
-    display.println("Mode : NIGHT ALERT");
-    display.println("isDark&&(m1||m2)=TRUE");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 2: &amp;&amp; + ||]");
+    display.setCursor(0, 10); display.print("Dark &amp;&amp; (PIR1 || PIR2)");
+    display.setCursor(0, 20); display.print("Lamp1:ON | Lamp2:OFF");
+    display.setCursor(0, 30); display.print("LED1(G):ON LED2(R):OFF");
+    display.setCursor(0, 40); display.print("Mode : NIGHT ALERT");
+    display.setCursor(0, 50); display.print("isDark&amp;&amp;(m1||m2)=TRUE");
     display.display();
-    Serial.println("CASE 2: isDark && (motion1 || motion2) -> LAMP1 & LED1 ON");
+    Serial.println("CASE 2: isDark &amp;&amp; (motion1 || motion2) -> LAMP1 &amp; LED1 ON");
   }
-  // เงื่อนไข 3 (! และ ||): ไม่มืด/กลางวัน (!isDark) แต่มีการเคลื่อนไหว (motion1 || motion2)
-  else if (!isDark && (motion1 || motion2)) {
+  // เงื่อนไข 3 (! และ ||): ไม่มืด (!isDark) แต่มีการเคลื่อนไหว
+  else if (!isDark &amp;&amp; (motion1 || motion2)) {
     digitalWrite(relay1, LOW);
     digitalWrite(relay2, LOW);
     digitalWrite(led1, HIGH);
     digitalWrite(led2, LOW);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 3: !isDark ||]");
-    display.println("!Dark && (PIR1 || PIR2)");
-    display.println("Lamp1:OFF | Lamp2:OFF");
-    display.println("LED1(G):ON LED2(R):OFF");
-    display.println("Mode : DAY ALERT ONLY");
-    display.println("!isDark&&(m1||m2)=TRUE");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 3: !isDark ||]");
+    display.setCursor(0, 10); display.print("!Dark &amp;&amp; (PIR1 || PIR2)");
+    display.setCursor(0, 20); display.print("Lamp1:OFF | Lamp2:OFF");
+    display.setCursor(0, 30); display.print("LED1(G):ON LED2(R):OFF");
+    display.setCursor(0, 40); display.print("Mode : DAY ALERT ONLY");
+    display.setCursor(0, 50); display.print("!isDark&amp;&amp;(m1||m2)=TRUE");
     display.display();
-    Serial.println("CASE 3: !isDark && (motion1 || motion2) -> DAY ALERT (LED1 ON)");
+    Serial.println("CASE 3: !isDark &amp;&amp; (motion1 || motion2) -> LED1 ON");
   }
-  // เงื่อนไข 4 (else): กรณีอื่นๆ (ไม่มีการเคลื่อนไหว)
+  // เงื่อนไข 4 (else): กรณีอื่นๆ
   else {
     digitalWrite(relay1, LOW);
     digitalWrite(relay2, LOW);
@@ -740,18 +761,19 @@ void loop() {
     digitalWrite(led2, HIGH);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 4: ELSE IDLE]");
-    display.println("No Motion Detected");
-    display.println("Lamp1:OFF | Lamp2:OFF");
-    display.println("LED1(G):OFF LED2(R):ON");
-    display.println("Mode : STANDBY");
-    display.println("Logic: else (Default)");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 4: ELSE IDLE]");
+    display.setCursor(0, 10); display.print("No Motion Detected");
+    display.setCursor(0, 20); display.print("Lamp1:OFF | Lamp2:OFF");
+    display.setCursor(0, 30); display.print("LED1(G):OFF LED2(R):ON");
+    display.setCursor(0, 40); display.print("Mode : STANDBY");
+    display.setCursor(0, 50); display.print("Logic: else (Default)");
     display.display();
     Serial.println("CASE 4: else -> STANDBY (LED2 RED ON)");
   }
 
-  delay(300);
+  delay(200);
 }</textarea>
       </div>
 
@@ -765,7 +787,7 @@ void loop() {
           <button id="btnClearConsole" class="text-[11px] text-slate-400 hover:text-white">ล้างข้อความ</button>
         </div>
         <div id="serialConsole" class="flex-1 p-2 code-font text-xs text-slate-300 overflow-y-auto space-y-1">
-          <div class="text-slate-500">[ระบบ] พร้อมใช้งาน: กด "ต่อวงจรอัตโนมัติ" เปิดเบรกเกอร์ 220VAC แล้วกด "▶ รัน (Run)"</div>
+          <div class="text-slate-500">[ระบบ] พร้อมใช้งาน: ต่อสายวงจร (หรือกด "ต่อวงจรอัตโนมัติ") แล้วกด "▶ รัน (Run)"</div>
         </div>
       </div>
     </aside>
@@ -830,7 +852,7 @@ void loop() {
     // =========================================================================
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const STATIC_PINS = [
-      // OLED 6-Line (offset: 28, 52)
+      // OLED 128x64 (offset: 28, 52)
       { id: 'OLED_VCC', component: 'OLED', name: 'OLED VCC', x: 28 + 71,  y: 52 + 139, color: '#f87171', type: 'header' },
       { id: 'OLED_GND', component: 'OLED', name: 'OLED GND', x: 28 + 104, y: 52 + 139, color: '#94a3b8', type: 'header' },
       { id: 'OLED_SCL', component: 'OLED', name: 'OLED SCL', x: 28 + 138, y: 52 + 139, color: '#fde047', type: 'header' },
@@ -907,7 +929,7 @@ void loop() {
       { id: 'FAN2_2', component: 'Fan #2', name: 'พัดลม #2 ขั้ว 2', x: 1175 + 122, y: 480 + 235, color: '#c4b5fd', type: 'screw' }
     ];
 
-    let relayChannels = 2; // Default 2-Ch so both 12VAC Lamps can be controlled immediately
+    let relayChannels = 2;
     let PINS = [];
     let wires = [];
     let selectedColor = '#ef4444';
@@ -924,15 +946,29 @@ void loop() {
     let isRunning = false;
     let runToken = 0;
 
-    // OLED Crisp 6-Line State
+    // OLED SSD1306 State (128x64 logical -> 256x128 SVG)
     let oledDrawItems = [];
-    let oledCursorX = 0;
-    let oledCursorY = 0;
-    let oledTextSize = 1;
+    let oledInverted = false;
+    let lastOledSnapshot = '';
 
-    function updateOLEDVisual(powered) {
+    function isOLEDHardwareConnected(adj) {
+      const a = adj || buildAdjacency();
+      return (
+        isConnected(a, 'OLED_VCC', 'UNO_5V') &&
+        isConnected(a, 'OLED_GND', 'UNO_GND1') &&
+        isConnected(a, 'OLED_SCL', 'UNO_A5') &&
+        isConnected(a, 'OLED_SDA', 'UNO_A4')
+      );
+    }
+
+    function updateOLEDVisual(powered, force = false) {
       const screenSvg = document.getElementById('oled-screen-svg');
       if (!screenSvg) return;
+
+      const snapshot = powered ? JSON.stringify({ oledDrawItems, oledInverted }) : 'OFF';
+      if (!force && snapshot === lastOledSnapshot) return;
+      lastOledSnapshot = snapshot;
+
       screenSvg.innerHTML = '';
       if (!powered) return;
 
@@ -941,22 +977,62 @@ void loop() {
       bg.setAttribute('y', '0');
       bg.setAttribute('width', '256');
       bg.setAttribute('height', '128');
-      bg.setAttribute('fill', '#020617');
+      bg.setAttribute('fill', oledInverted ? '#e2e8f0' : '#020617');
       screenSvg.appendChild(bg);
 
+      const resolveColor = (c) => {
+        const isBlack = (c === 0 || c === 'BLACK');
+        if (oledInverted) return isBlack ? '#e2e8f0' : '#020617';
+        return isBlack ? '#020617' : '#f8fafc';
+      };
+
       oledDrawItems.forEach(item => {
-        const textEl = document.createElementNS(SVG_NS, 'text');
-        const fontSize = 14 * item.size;
-        const pxX = Math.max(4, item.x * 2 + 4);
-        const pxY = item.y * 2 + fontSize + 2;
-        textEl.setAttribute('x', pxX);
-        textEl.setAttribute('y', pxY);
-        textEl.setAttribute('font-size', fontSize);
-        textEl.setAttribute('fill', item.y < 10 ? '#38bdf8' : '#e2e8f0');
-        textEl.setAttribute('class', 'code-font');
-        textEl.setAttribute('letter-spacing', '-0.3');
-        textEl.textContent = item.text;
-        screenSvg.appendChild(textEl);
+        if (item.kind === 'rect') {
+          const r = document.createElementNS(SVG_NS, 'rect');
+          r.setAttribute('x', item.x * 2);
+          r.setAttribute('y', item.y * 2);
+          r.setAttribute('width', item.w * 2);
+          r.setAttribute('height', item.h * 2);
+          const col = resolveColor(item.color);
+          r.setAttribute('fill', item.fill ? col : 'none');
+          r.setAttribute('stroke', col);
+          r.setAttribute('stroke-width', item.fill ? '0' : '2');
+          screenSvg.appendChild(r);
+        } else if (item.kind === 'circle') {
+          const c = document.createElementNS(SVG_NS, 'circle');
+          c.setAttribute('cx', item.x * 2);
+          c.setAttribute('cy', item.y * 2);
+          c.setAttribute('r', item.r * 2);
+          const col = resolveColor(item.color);
+          c.setAttribute('fill', item.fill ? col : 'none');
+          c.setAttribute('stroke', col);
+          c.setAttribute('stroke-width', item.fill ? '0' : '2');
+          screenSvg.appendChild(c);
+        } else if (item.kind === 'line') {
+          const l = document.createElementNS(SVG_NS, 'line');
+          l.setAttribute('x1', item.x0 * 2);
+          l.setAttribute('y1', item.y0 * 2);
+          l.setAttribute('x2', item.x1 * 2);
+          l.setAttribute('y2', item.y1 * 2);
+          l.setAttribute('stroke', resolveColor(item.color));
+          l.setAttribute('stroke-width', '2');
+          screenSvg.appendChild(l);
+        } else {
+          // Text item (128x64 -> 256x128: size 1 = 8px tall logical = 16px SVG)
+          const textEl = document.createElementNS(SVG_NS, 'text');
+          const size = item.size || 1;
+          const fontSize = 15 * size;
+          const pxX = item.x * 2 + 2;
+          const pxY = item.y * 2 + 13 * size;
+          textEl.setAttribute('x', pxX);
+          textEl.setAttribute('y', pxY);
+          textEl.setAttribute('font-size', fontSize);
+          textEl.setAttribute('fill', resolveColor(item.color));
+          textEl.setAttribute('class', 'code-font');
+          textEl.setAttribute('letter-spacing', '-0.2');
+          textEl.textContent = item.text;
+          screenSvg.appendChild(textEl);
+        }
       });
     }
 
@@ -1372,11 +1448,7 @@ void loop() {
       document.getElementById('uno-led-l').setAttribute('fill', pinStates[13] ? '#facc15' : '#713f12');
 
       // OLED Power & I2C
-      const oledPowered =
-        isConnected(dcAdj, 'OLED_VCC', 'UNO_5V') &&
-        isConnected(dcAdj, 'OLED_GND', 'UNO_GND1') &&
-        isConnected(dcAdj, 'OLED_SCL', 'UNO_A5') &&
-        isConnected(dcAdj, 'OLED_SDA', 'UNO_A4');
+      const oledPowered = isOLEDHardwareConnected(dcAdj);
       updateOLEDVisual(oledPowered);
       const bOled = document.getElementById('badge-oled');
       bOled.textContent = oledPowered ? 'OLED: ON' : 'OLED: OFF';
@@ -1462,12 +1534,12 @@ void loop() {
         : 'px-2 py-0.5 rounded-full font-semibold bg-slate-800 text-slate-400 border border-slate-700';
 
       const diag = document.getElementById('circuitDiagnosis');
-      if (!breakerOn) {
-        diag.textContent = '⚠️ เบรกเกอร์ 220VAC ปิดอยู่ — คลิกที่สวิตช์ BREAKER สีแดงเพื่อจ่ายไฟ 12VAC';
-      } else if (!relayPowerOk) {
-        diag.textContent = '⚠️ โมดูล Relay ยังไม่ครบวงจร (กด "ต่อวงจรอัตโนมัติ" หรือต่อ VCC→5V, GND→GND)';
+      if (!breakerOn && relayPowerOk) {
+        diag.textContent = '⚠️ เบรกเกอร์ 220VAC ปิดอยู่ — คลิกที่สวิตช์ BREAKER สีแดงเพื่อจ่ายไฟ 12VAC ให้หลอดไฟ/พัดลม';
+      } else if (!relayPowerOk && !oledPowered) {
+        diag.textContent = '⚠️ ยังไม่ได้ต่อวงจร — กด "ต่อวงจรอัตโนมัติ" หรือต่อสายเอง แล้วกด "▶ รัน (Run)"';
       } else {
-        diag.textContent = `✅ ระบบพร้อมทำงาน | OLED: ${oledPowered ? 'ON' : 'OFF'} | LED5mm: ${led1On ? '1' : '-'}/${led2On ? '2' : '-'} | โหลด 12VAC: ${activeLoads.length ? activeLoads.join(', ') : 'รอคำสั่ง'}`;
+        diag.textContent = `✅ วงจรทำงาน | OLED: ${oledPowered ? 'ON' : 'OFF'} | LED5mm: ${led1On ? '1' : '-'}/${led2On ? '2' : '-'} | โหลด 12VAC: ${activeLoads.length ? activeLoads.join(', ') : 'ปิด'}`;
       }
     }
 
@@ -1618,7 +1690,7 @@ void loop() {
     document.getElementById('btnAutoWire').addEventListener('click', autoWireCircuit);
 
     // =========================================================================
-    // 7. ARDUINO C++ SIMULATOR ENGINE (NON-BLOCKING & FULL LOGIC SUPPORT)
+    // 7. ARDUINO C++ TRANSPILER & RUNTIME ENGINE (Adafruit_SSD1306 + Full C++)
     // =========================================================================
     const serialConsole = document.getElementById('serialConsole');
     const serialStatusDot = document.getElementById('serialStatusDot');
@@ -1630,7 +1702,7 @@ void loop() {
     let lastLoggedMsg = '';
     function logSerial(msg, cls = 'text-emerald-300', force = false) {
       const text = String(msg);
-      if (!force && text === lastLoggedMsg) return; // Prevent duplicate spam
+      if (!force && text === lastLoggedMsg) return;
       lastLoggedMsg = text;
 
       const div = document.createElement('div');
@@ -1638,7 +1710,6 @@ void loop() {
       div.textContent = text;
       serialConsole.appendChild(div);
 
-      // Keep max 100 lines to prevent memory/DOM freeze
       while (serialConsole.children.length > 100) {
         serialConsole.removeChild(serialConsole.firstChild);
       }
@@ -1675,35 +1746,72 @@ void loop() {
     }
 
     function transpileArduinoToAsyncJS(code) {
-      // Strip block & line comments
-      let js = code
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .replace(/\/\/.*$/gm, '');
+      // 1. Preserve string literals while stripping comments
+      const strings = [];
+      let js = code.replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, (m) => {
+        const idx = strings.length;
+        strings.push(m);
+        return `__STR_${idx}__`;
+      });
 
-      // Strip #include and convert #define
+      // Strip C/C++ comments
+      js = js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+      // 2. Preprocessor directives
       js = js.replace(/^\s*#include\s+.*$/gm, '');
       js = js.replace(/^\s*#define\s+([a-zA-Z_]\w*)\s+(.+)$/gm, 'const $1 = $2;');
 
-      // Convert C++ typed arrays e.g. int arr[] = {1, 2};
-      js = js.replace(/\b(const\s+)?(unsigned\s+)?(int|long|float|double|bool|boolean|byte|char|short|String)\s+([a-zA-Z_]\w*)\s*\[\s*\d*\s*\]\s*=\s*\{([^}]*)\}/g, 'let $4 = [$5]');
+      // 3. Arduino F() flash string macro -> normal string
+      js = js.replace(/\bF\s*\(\s*(__STR_\d+__)\s*\)/g, '$1');
 
-      // Convert C++ variable declarations (preserves if, else if, else, &&, ||, !)
-      js = js.replace(/\b(const\s+)?(unsigned\s+)?(int|long|float|double|bool|boolean|byte|char|short|String)\s+(?=[a-zA-Z_]\w*\s*(?:=|;|,))/g, 'let ');
+      // 4. Object instantiations (Adafruit_SSD1306 display(...); Wire; etc.)
+      js = js.replace(/\bAdafruit_SSD1306\s+([a-zA-Z_]\w*)\s*\([^;]*\)\s*;/g, 'const $1 = __createSSD1306();');
+      js = js.replace(/\bAdafruit_SSD1306\s+([a-zA-Z_]\w*)\s*;/g, 'const $1 = __createSSD1306();');
 
-      // Convert function signatures
-      js = js.replace(/\bvoid\s+setup\s*\(\s*\)/g, 'async function setup()');
-      js = js.replace(/\bvoid\s+loop\s*\(\s*\)/g, 'async function loop()');
-      js = js.replace(/\bvoid\s+([a-zA-Z_]\w*)\s*\(/g, 'async function $1(');
-      js = js.replace(/\b(int|long|float|double|bool|boolean|String)\s+([a-zA-Z_]\w*)\s*\(/g, 'async function $2(');
+      // Strip C++ address-of (&Wire -> Wire) while preserving bitwise & and logical &&
+      js = js.replace(/(?<![&a-zA-Z0-9_\)])&\s*([a-zA-Z_]\w*)/g, '$1');
 
-      // Convert delay() to await __delay()
+      // 5. Function declarations & typed parameters
+      const cTypes = '(?:const\\s+|static\\s+|volatile\\s+|unsigned\\s+|signed\\s+)*(?:void|int|long|short|byte|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t|float|double|bool|boolean|char|String|word)';
+      const fnRegex = new RegExp(`\\b${cTypes}\\s+([a-zA-Z_]\\w*)\\s*\\(([^)]*)\\)\\s*\\{`, 'g');
+      js = js.replace(fnRegex, (_, fnName, params) => {
+        const cleanParams = params
+          .split(',')
+          .map(p => p.trim())
+          .filter(Boolean)
+          .map(p => {
+            const parts = p.replace(/\[\s*\]/g, '').split(/\s+/);
+            return parts[parts.length - 1];
+          })
+          .join(', ');
+        return `async function ${fnName}(${cleanParams}) {`;
+      });
+
+      // 6. C++ typed arrays: int arr[] = {1, 2}; or int arr[5];
+      const varTypes = '(?:const\\s+|static\\s+|volatile\\s+|unsigned\\s+|signed\\s+)*(?:int|long|short|byte|uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|size_t|float|double|bool|boolean|char|String|word)';
+      js = js.replace(new RegExp(`\\b${varTypes}\\s+([a-zA-Z_]\\w*)\\s*\\[\\s*\\d*\\s*\\]\\s*=\\s*\\{([^}]*)\\}\\s*;`, 'g'), 'let $1 = [$2];');
+      js = js.replace(new RegExp(`\\b${varTypes}\\s+([a-zA-Z_]\\w*)\\s*\\[\\s*(\\d+)\\s*\\]\\s*;`, 'g'), 'let $1 = new Array($2).fill(0);');
+
+      // 7. C++ variable declarations (preserves if, else if, else, &&, ||, !)
+      js = js.replace(new RegExp(`\\b${varTypes}\\s+([a-zA-Z_]\\w*)\\s*;`, 'g'), 'let $1 = 0;');
+      js = js.replace(new RegExp(`\\b${varTypes}\\s+(?=[a-zA-Z_]\\w*\\s*(?:=|,))`, 'g'), 'let ');
+
+      // 8. C++ type casts: (int)x, (float)x, (bool)x
+      js = js.replace(/\(\s*(?:unsigned\s+)?(?:int|long|short|byte|uint8_t|uint16_t|uint32_t|float|double|bool|boolean|char)\s*\)/g, '');
+
+      // 9. Delay functions
       js = js.replace(/\bdelay\s*\(/g, 'await __delay(');
       js = js.replace(/\bdelayMicroseconds\s*\(/g, 'await __delayMicro(');
 
-      // Inject anti-freeze loop guard into while(...) { and for(...) {
+      // 10. Non-blocking loop protection (handles both `for (;;);` and `while (...) { ... }`)
+      js = js.replace(/\bfor\s*\(\s*;\s*;\s*\)\s*;/g, 'for (;;) { await __delay(50); }');
+      js = js.replace(/\bwhile\s*\(\s*(?:true|1)\s*\)\s*;/g, 'while (true) { await __delay(50); }');
       js = js.replace(/\b(while|for)\s*\(([^()]*|\([^()]*\))*\)\s*\{/g, (match) => {
         return `${match} if (++__loopGuard % 200 === 0) await __yield();`;
       });
+
+      // Restore string literals
+      js = js.replace(/__STR_(\d+)__/g, (_, idx) => strings[Number(idx)]);
 
       return js;
     }
@@ -1737,18 +1845,30 @@ void loop() {
       const myToken = ++runToken;
       const startTime = Date.now();
       lastLoggedMsg = '';
+      lastOledSnapshot = '';
       pinStates = {};
       oledDrawItems = [];
-      oledCursorX = 0;
-      oledCursorY = 0;
-      oledTextSize = 1;
+      oledInverted = false;
 
       setRunningButtonsUI(true);
       logSerial('--- เริ่มการทำงาน Arduino UNO ---', 'text-sky-400', true);
 
       const HIGH = 1, LOW = 0, OUTPUT = 1, INPUT = 0, INPUT_PULLUP = 2;
-      const WHITE = 1, BLACK = 0, SSD1306_SWITCHCAPVCC = 2;
+      const WHITE = 1, BLACK = 0, INVERSE = 2;
+      const SSD1306_WHITE = 1, SSD1306_BLACK = 0, SSD1306_INVERSE = 2;
+      const SSD1306_SWITCHCAPVCC = 2, SSD1306_EXTERNALVCC = 1;
+      const DEC = 10, HEX = 16, OCT = 8, BIN = 2;
       const A0 = 'A0', A1 = 'A1', A2 = 'A2', A3 = 'A3', A4 = 'A4', A5 = 'A5';
+
+      const Wire = {
+        begin: () => {},
+        beginTransmission: () => {},
+        write: () => {},
+        endTransmission: () => 0,
+        requestFrom: () => 0,
+        available: () => 0,
+        read: () => 0
+      };
 
       const pinMode = () => {};
       const digitalWrite = (pin, val) => {
@@ -1758,48 +1878,117 @@ void loop() {
       };
       const digitalRead = (pin) => readHardwareDigitalPin(pin);
       const analogRead = (pin) => readHardwareAnalogPin(pin);
+      const analogWrite = (pin, val) => {
+        if (myToken !== runToken) return;
+        pinStates[pin] = (Number(val) || 0) > 0 ? 1 : 0;
+        evaluateCircuit();
+      };
       const millis = () => Date.now() - startTime;
       const micros = () => (Date.now() - startTime) * 1000;
+      const map = (x, inMin, inMax, outMin, outMax) => (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+      const constrain = (x, a, b) => Math.min(Math.max(x, a), b);
+      const min = Math.min;
+      const max = Math.max;
+      const abs = Math.abs;
+      const pow = Math.pow;
+      const sqrt = Math.sqrt;
+      const sin = Math.sin;
+      const cos = Math.cos;
+      const tan = Math.tan;
+      const randomSeed = () => {};
+      const random = (a, b) => b === undefined ? Math.floor(Math.random() * a) : Math.floor(Math.random() * (b - a)) + a;
+      const tone = (pin) => digitalWrite(pin, 1);
+      const noTone = (pin) => digitalWrite(pin, 0);
+
+      const formatArduinoVal = (val, fmt) => {
+        if (typeof val === 'number' && fmt !== undefined) {
+          if (fmt === HEX) return Math.floor(val).toString(16).toUpperCase();
+          if (fmt === BIN) return Math.floor(val).toString(2);
+          if (fmt === OCT) return Math.floor(val).toString(8);
+          if (fmt === DEC) return Math.floor(val).toString(10);
+          if (!Number.isInteger(val)) return val.toFixed(fmt);
+        }
+        return String(val);
+      };
 
       const Serial = {
         begin: () => {},
-        println: (m = '') => { if (myToken === runToken) logSerial(String(m)); },
-        print: (m = '') => { if (myToken === runToken) logSerial(String(m)); }
+        println: (m = '', fmt) => { if (myToken === runToken) logSerial(formatArduinoVal(m, fmt)); },
+        print: (m = '', fmt) => { if (myToken === runToken) logSerial(formatArduinoVal(m, fmt)); },
+        available: () => 0,
+        read: () => -1
       };
 
-      let pendingOLED = [];
-      const display = {
-        begin: () => true,
-        clearDisplay: () => {
-          pendingOLED = [];
-          oledCursorX = 0;
-          oledCursorY = 0;
-        },
-        setCursor: (x, y) => {
-          oledCursorX = Number(x) || 0;
-          oledCursorY = Number(y) || 0;
-        },
-        setTextSize: (s) => {
-          oledTextSize = Math.max(1, Number(s) || 1);
-        },
-        setTextColor: () => {},
-        print: (txt = '') => {
-          const str = String(txt);
-          pendingOLED.push({ x: oledCursorX, y: oledCursorY, size: oledTextSize, text: str });
-          oledCursorX += str.length * 6 * oledTextSize;
-        },
-        println: (txt = '') => {
-          const str = String(txt);
-          pendingOLED.push({ x: oledCursorX, y: oledCursorY, size: oledTextSize, text: str });
-          oledCursorX = 0;
-          oledCursorY += 10 * oledTextSize;
-        },
-        display: () => {
-          if (myToken !== runToken) return;
-          oledDrawItems = [...pendingOLED];
-          evaluateCircuit();
-        }
+      const __createSSD1306 = () => {
+        let pending = [];
+        let cx = 0;
+        let cy = 0;
+        let tSize = 1;
+        let tColor = 1;
+
+        return {
+          begin: () => {
+            if (!isOLEDHardwareConnected()) {
+              logSerial('[คำเตือน OLED] ยังไม่ได้ต่อสายจอ OLED ครบ (ต้องต่อ VCC->5V, GND->GND, SCL->A5, SDA->A4)', 'text-amber-400', true);
+              return false;
+            }
+            return true;
+          },
+          clearDisplay: () => {
+            pending = [];
+            cx = 0;
+            cy = 0;
+          },
+          setCursor: (x, y) => {
+            cx = Number(x) || 0;
+            cy = Number(y) || 0;
+          },
+          setTextSize: (s) => {
+            tSize = Math.max(1, Number(s) || 1);
+          },
+          setTextColor: (c) => {
+            tColor = c;
+          },
+          invertDisplay: (inv) => {
+            oledInverted = Boolean(inv);
+            updateOLEDVisual(isOLEDHardwareConnected(), true);
+          },
+          dim: () => {},
+          drawLine: (x0, y0, x1, y1, color = 1) => {
+            pending.push({ kind: 'line', x0: Number(x0), y0: Number(y0), x1: Number(x1), y1: Number(y1), color });
+          },
+          drawRect: (x, y, w, h, color = 1) => {
+            pending.push({ kind: 'rect', x: Number(x), y: Number(y), w: Number(w), h: Number(h), color, fill: false });
+          },
+          fillRect: (x, y, w, h, color = 1) => {
+            pending.push({ kind: 'rect', x: Number(x), y: Number(y), w: Number(w), h: Number(h), color, fill: true });
+          },
+          drawCircle: (x, y, r, color = 1) => {
+            pending.push({ kind: 'circle', x: Number(x), y: Number(y), r: Number(r), color, fill: false });
+          },
+          fillCircle: (x, y, r, color = 1) => {
+            pending.push({ kind: 'circle', x: Number(x), y: Number(y), r: Number(r), color, fill: true });
+          },
+          print: (txt = '', fmt) => {
+            const str = formatArduinoVal(txt, fmt);
+            pending.push({ kind: 'text', x: cx, y: cy, size: tSize, color: tColor, text: str });
+            cx += str.length * 6 * tSize;
+          },
+          println: (txt = '', fmt) => {
+            const str = formatArduinoVal(txt, fmt);
+            pending.push({ kind: 'text', x: cx, y: cy, size: tSize, color: tColor, text: str });
+            cx = 0;
+            cy += 8 * tSize;
+          },
+          display: () => {
+            if (myToken !== runToken) return;
+            oledDrawItems = [...pending];
+            updateOLEDVisual(isOLEDHardwareConnected());
+          }
+        };
       };
+
+      const defaultDisplay = __createSSD1306();
 
       const __delay = (ms) => new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -1819,23 +2008,34 @@ void loop() {
 
       try {
         const jsBody = transpileArduinoToAsyncJS(cppEditor.value);
+        const hasCustomDisplay = /\bconst\s+display\b/.test(jsBody);
+        const displayDecl = hasCustomDisplay ? '' : 'const display = __defaultDisplay;\n';
+
         const runner = new Function(
           'HIGH', 'LOW', 'OUTPUT', 'INPUT', 'INPUT_PULLUP',
-          'WHITE', 'BLACK', 'SSD1306_SWITCHCAPVCC',
+          'WHITE', 'BLACK', 'INVERSE',
+          'SSD1306_WHITE', 'SSD1306_BLACK', 'SSD1306_INVERSE',
+          'SSD1306_SWITCHCAPVCC', 'SSD1306_EXTERNALVCC',
+          'DEC', 'HEX', 'OCT', 'BIN',
           'A0', 'A1', 'A2', 'A3', 'A4', 'A5',
-          'pinMode', 'digitalWrite', 'digitalRead', 'analogRead',
-          'millis', 'micros',
-          'Serial', 'display', '__delay', '__delayMicro', '__yield', '__isAlive',
-          `let __loopGuard = 0;\n${jsBody}\nreturn (async () => { if (typeof setup === 'function') await setup(); while (__isAlive()) { if (typeof loop === 'function') await loop(); await __delay(30); } })();`
+          'Wire', 'pinMode', 'digitalWrite', 'digitalRead', 'analogRead', 'analogWrite',
+          'millis', 'micros', 'map', 'constrain', 'min', 'max', 'abs', 'pow', 'sqrt', 'sin', 'cos', 'tan',
+          'randomSeed', 'random', 'tone', 'noTone',
+          'Serial', '__createSSD1306', '__defaultDisplay', '__delay', '__delayMicro', '__yield', '__isAlive',
+          `let __loopGuard = 0;\n${displayDecl}${jsBody}\nreturn (async () => { if (typeof setup === 'function') await setup(); while (__isAlive()) { if (typeof loop === 'function') await loop(); await __delay(25); } })();`
         );
 
         await runner(
           HIGH, LOW, OUTPUT, INPUT, INPUT_PULLUP,
-          WHITE, BLACK, SSD1306_SWITCHCAPVCC,
+          WHITE, BLACK, INVERSE,
+          SSD1306_WHITE, SSD1306_BLACK, SSD1306_INVERSE,
+          SSD1306_SWITCHCAPVCC, SSD1306_EXTERNALVCC,
+          DEC, HEX, OCT, BIN,
           A0, A1, A2, A3, A4, A5,
-          pinMode, digitalWrite, digitalRead, analogRead,
-          millis, micros,
-          Serial, display, __delay, __delayMicro, __yield, () => myToken === runToken
+          Wire, pinMode, digitalWrite, digitalRead, analogRead, analogWrite,
+          millis, micros, map, constrain, min, max, abs, pow, sqrt, sin, cos, tan,
+          randomSeed, random, tone, noTone,
+          Serial, __createSSD1306, defaultDisplay, __delay, __delayMicro, __yield, () => myToken === runToken
         );
       } catch (err) {
         if (err && err.message !== 'STOPPED') {
@@ -1860,10 +2060,18 @@ void loop() {
     topBtnStop.addEventListener('click', stopSimulation);
 
     // =========================================================================
-    // 8. CODE PRESETS (ALL USING if / else if / else / && / || / !)
+    // 8. CODE PRESETS
     // =========================================================================
     document.getElementById('presetLogic').addEventListener('click', () => {
-      cppEditor.value = `// ระบบควบคุมอัจฉริยะด้วยเงื่อนไข if / else if / else และ && / || / !
+      cppEditor.value = `#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
 // หลอด LED 5mm ทั้ง 2 ดวง: ขาซ้าย (+) ต่อตรง, ขาขวา (-) ผ่าน R 220Ω ลง GND
 int pir1Pin = 2;    // PIR Sensor #1 (D2)
 int pir2Pin = 10;   // PIR Sensor #2 (D10)
@@ -1883,16 +2091,26 @@ void setup() {
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
 
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;);
+  }
   display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.println("=== SMART LOGIC ===");
+  display.setCursor(0, 10);
   display.println("if / else if / else");
+  display.setCursor(0, 20);
   display.println("Operators: && || !");
+  display.setCursor(0, 30);
   display.println("LED1:D12 | LED2:D11");
+  display.setCursor(0, 40);
   display.println("R 220R on Right (-)");
+  display.setCursor(0, 50);
   display.println("Status: READY");
   display.display();
-  Serial.println("System Ready! กดคลิก PIR1, PIR2 หรือ LDR เพื่อทดสอบเงื่อนไข");
+  Serial.println("System Ready! คลิกทดสอบ PIR1, PIR2 หรือ LDR ได้เลย");
 }
 
 void loop() {
@@ -1900,7 +2118,7 @@ void loop() {
   bool motion2 = (digitalRead(pir2Pin) == HIGH);
   bool isDark  = (digitalRead(ldrPin) == HIGH);
 
-  // เงื่อนไข 1 (&&): เวลากลางคืน (isDark) และตรวจพบคนทั้ง 2 จุด (motion1 && motion2)
+  // เงื่อนไข 1 (&&): มืด และตรวจพบคนทั้ง 2 จุด
   if (isDark && (motion1 && motion2)) {
     digitalWrite(relay1, HIGH);
     digitalWrite(relay2, HIGH);
@@ -1908,17 +2126,18 @@ void loop() {
     digitalWrite(led2, HIGH);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 1: && FULL ON]");
-    display.println("Dark && PIR1 && PIR2");
-    display.println("Lamp1:ON | Lamp2:ON");
-    display.println("LED1(G):ON LED2(R):ON");
-    display.println("Mode : FULL SECURITY");
-    display.println("isDark&&(m1&&m2)=TRUE");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 1: && FULL ON]");
+    display.setCursor(0, 10); display.print("Dark && PIR1 && PIR2");
+    display.setCursor(0, 20); display.print("Lamp1:ON | Lamp2:ON");
+    display.setCursor(0, 30); display.print("LED1(G):ON LED2(R):ON");
+    display.setCursor(0, 40); display.print("Mode : FULL SECURITY");
+    display.setCursor(0, 50); display.print("isDark&&(m1&&m2)=TRUE");
     display.display();
     Serial.println("CASE 1: isDark && (motion1 && motion2) -> ALL ON");
   }
-  // เงื่อนไข 2 (&& และ ||): เวลากลางคืน (isDark) และตรวจพบคนจุดใดจุดหนึ่ง (motion1 || motion2)
+  // เงื่อนไข 2 (&& และ ||): มืด และตรวจพบคนจุดใดจุดหนึ่ง
   else if (isDark && (motion1 || motion2)) {
     digitalWrite(relay1, HIGH);
     digitalWrite(relay2, LOW);
@@ -1926,17 +2145,18 @@ void loop() {
     digitalWrite(led2, LOW);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 2: && + ||]");
-    display.println("Dark && (PIR1 || PIR2)");
-    display.println("Lamp1:ON | Lamp2:OFF");
-    display.println("LED1(G):ON LED2(R):OFF");
-    display.println("Mode : NIGHT ALERT");
-    display.println("isDark&&(m1||m2)=TRUE");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 2: && + ||]");
+    display.setCursor(0, 10); display.print("Dark && (PIR1 || PIR2)");
+    display.setCursor(0, 20); display.print("Lamp1:ON | Lamp2:OFF");
+    display.setCursor(0, 30); display.print("LED1(G):ON LED2(R):OFF");
+    display.setCursor(0, 40); display.print("Mode : NIGHT ALERT");
+    display.setCursor(0, 50); display.print("isDark&&(m1||m2)=TRUE");
     display.display();
     Serial.println("CASE 2: isDark && (motion1 || motion2) -> LAMP1 & LED1 ON");
   }
-  // เงื่อนไข 3 (! และ ||): ไม่มืด/กลางวัน (!isDark) แต่มีการเคลื่อนไหว (motion1 || motion2)
+  // เงื่อนไข 3 (! และ ||): ไม่มืด (!isDark) แต่มีการเคลื่อนไหว
   else if (!isDark && (motion1 || motion2)) {
     digitalWrite(relay1, LOW);
     digitalWrite(relay2, LOW);
@@ -1944,17 +2164,18 @@ void loop() {
     digitalWrite(led2, LOW);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 3: !isDark ||]");
-    display.println("!Dark && (PIR1 || PIR2)");
-    display.println("Lamp1:OFF | Lamp2:OFF");
-    display.println("LED1(G):ON LED2(R):OFF");
-    display.println("Mode : DAY ALERT ONLY");
-    display.println("!isDark&&(m1||m2)=TRUE");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 3: !isDark ||]");
+    display.setCursor(0, 10); display.print("!Dark && (PIR1 || PIR2)");
+    display.setCursor(0, 20); display.print("Lamp1:OFF | Lamp2:OFF");
+    display.setCursor(0, 30); display.print("LED1(G):ON LED2(R):OFF");
+    display.setCursor(0, 40); display.print("Mode : DAY ALERT ONLY");
+    display.setCursor(0, 50); display.print("!isDark&&(m1||m2)=TRUE");
     display.display();
-    Serial.println("CASE 3: !isDark && (motion1 || motion2) -> DAY ALERT (LED1 ON)");
+    Serial.println("CASE 3: !isDark && (motion1 || motion2) -> LED1 ON");
   }
-  // เงื่อนไข 4 (else): กรณีอื่นๆ (ไม่มีการเคลื่อนไหว)
+  // เงื่อนไข 4 (else): กรณีอื่นๆ
   else {
     digitalWrite(relay1, LOW);
     digitalWrite(relay2, LOW);
@@ -1962,24 +2183,69 @@ void loop() {
     digitalWrite(led2, HIGH);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("[CASE 4: ELSE IDLE]");
-    display.println("No Motion Detected");
-    display.println("Lamp1:OFF | Lamp2:OFF");
-    display.println("LED1(G):OFF LED2(R):ON");
-    display.println("Mode : STANDBY");
-    display.println("Logic: else (Default)");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);  display.print("[CASE 4: ELSE IDLE]");
+    display.setCursor(0, 10); display.print("No Motion Detected");
+    display.setCursor(0, 20); display.print("Lamp1:OFF | Lamp2:OFF");
+    display.setCursor(0, 30); display.print("LED1(G):OFF LED2(R):ON");
+    display.setCursor(0, 40); display.print("Mode : STANDBY");
+    display.setCursor(0, 50); display.print("Logic: else (Default)");
     display.display();
     Serial.println("CASE 4: else -> STANDBY (LED2 RED ON)");
   }
 
-  delay(300);
+  delay(200);
+}`;
+      updateLineNumbers();
+    });
+
+    document.getElementById('presetOledRaw').addEventListener('click', () => {
+      cppEditor.value = `#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;); 
+  }
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+}
+
+void loop() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.print("A");
+  display.setCursor(0, 8);
+  display.print("B");
+  display.setCursor(0, 16);
+  display.print("A");
+  display.setCursor(0, 32);
+  display.print("A");
+  display.setCursor(0, 48);
+  display.print("A");
+  display.display();
 }`;
       updateLineNumbers();
     });
 
     document.getElementById('presetCycle').addEventListener('click', () => {
-      cppEditor.value = `// ทดสอบสลับการทำงานอัตโนมัติด้วยเงื่อนไข if / else if / else และ ! / || / &&
+      cppEditor.value = `#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
 int relay1 = 7;
 int relay2 = 6;
 int led1 = 12;
@@ -1993,23 +2259,27 @@ void setup() {
   pinMode(relay2, OUTPUT);
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;);
+  }
 }
 
 void loop() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
   if (!emergencyStop && step == 1) {
     digitalWrite(relay1, HIGH);
     digitalWrite(relay2, LOW);
     digitalWrite(led1, HIGH);
     digitalWrite(led2, LOW);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("== AUTO CYCLE MODE ==");
-    display.println("Step 1: !stop && s==1");
-    display.println("Lamp 12V#1 : ON");
-    display.println("Lamp 12V#2 : OFF");
-    display.println("LED 5mm #1 : ON (GRN)");
-    display.println("LED 5mm #2 : OFF");
-    display.display();
+    display.setCursor(0, 0);  display.print("== AUTO CYCLE MODE ==");
+    display.setCursor(0, 10); display.print("Step 1: !stop && s==1");
+    display.setCursor(0, 20); display.print("Lamp 12V#1 : ON");
+    display.setCursor(0, 30); display.print("Lamp 12V#2 : OFF");
+    display.setCursor(0, 40); display.print("LED 5mm #1 : ON (GRN)");
+    display.setCursor(0, 50); display.print("LED 5mm #2 : OFF");
     Serial.println("Step 1: Lamp1=ON, LED1=ON");
   }
   else if (!emergencyStop && step == 2) {
@@ -2017,15 +2287,12 @@ void loop() {
     digitalWrite(relay2, HIGH);
     digitalWrite(led1, LOW);
     digitalWrite(led2, HIGH);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("== AUTO CYCLE MODE ==");
-    display.println("Step 2: !stop && s==2");
-    display.println("Lamp 12V#1 : OFF");
-    display.println("Lamp 12V#2 : ON");
-    display.println("LED 5mm #1 : OFF");
-    display.println("LED 5mm #2 : ON (RED)");
-    display.display();
+    display.setCursor(0, 0);  display.print("== AUTO CYCLE MODE ==");
+    display.setCursor(0, 10); display.print("Step 2: !stop && s==2");
+    display.setCursor(0, 20); display.print("Lamp 12V#1 : OFF");
+    display.setCursor(0, 30); display.print("Lamp 12V#2 : ON");
+    display.setCursor(0, 40); display.print("LED 5mm #1 : OFF");
+    display.setCursor(0, 50); display.print("LED 5mm #2 : ON (RED)");
     Serial.println("Step 2: Lamp2=ON, LED2=ON");
   }
   else if (step == 3 || step == 4) {
@@ -2033,15 +2300,12 @@ void loop() {
     digitalWrite(relay2, HIGH);
     digitalWrite(led1, HIGH);
     digitalWrite(led2, HIGH);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("== AUTO CYCLE MODE ==");
-    display.println("Step 3: s==3 || s==4");
-    display.println("Lamp 12V#1 : ON");
-    display.println("Lamp 12V#2 : ON");
-    display.println("LED 5mm #1 : ON (GRN)");
-    display.println("LED 5mm #2 : ON (RED)");
-    display.display();
+    display.setCursor(0, 0);  display.print("== AUTO CYCLE MODE ==");
+    display.setCursor(0, 10); display.print("Step 3: s==3 || s==4");
+    display.setCursor(0, 20); display.print("Lamp 12V#1 : ON");
+    display.setCursor(0, 30); display.print("Lamp 12V#2 : ON");
+    display.setCursor(0, 40); display.print("LED 5mm #1 : ON (GRN)");
+    display.setCursor(0, 50); display.print("LED 5mm #2 : ON (RED)");
     Serial.println("Step 3: BOTH Lamps & LEDs ON");
   }
   else {
@@ -2049,114 +2313,21 @@ void loop() {
     digitalWrite(relay2, LOW);
     digitalWrite(led1, LOW);
     digitalWrite(led2, LOW);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("== AUTO CYCLE MODE ==");
-    display.println("Step 4: else (ALL OFF)");
-    display.println("Lamp 12V#1 : OFF");
-    display.println("Lamp 12V#2 : OFF");
-    display.println("LED 5mm #1 : OFF");
-    display.println("LED 5mm #2 : OFF");
-    display.display();
+    display.setCursor(0, 0);  display.print("== AUTO CYCLE MODE ==");
+    display.setCursor(0, 10); display.print("Step 4: else (ALL OFF)");
+    display.setCursor(0, 20); display.print("Lamp 12V#1 : OFF");
+    display.setCursor(0, 30); display.print("Lamp 12V#2 : OFF");
+    display.setCursor(0, 40); display.print("LED 5mm #1 : OFF");
+    display.setCursor(0, 50); display.print("LED 5mm #2 : OFF");
     Serial.println("Step 4 (else): ALL OFF");
   }
 
+  display.display();
   step++;
   if (step > 5) {
     step = 1;
   }
-  delay(1800);
-}`;
-      updateLineNumbers();
-    });
-
-    document.getElementById('presetTruth').addEventListener('click', () => {
-      cppEditor.value = `// ทดสอบตารางความจริง (Truth Table) ของ PIR1 (D2) และ LDR (D3)
-// ใช้ if / else if / else ร่วมกับ && และ !
-int pir1 = 2;
-int ldr  = 3;
-int relay1 = 7;
-int led1 = 12;
-int led2 = 11;
-
-void setup() {
-  Serial.begin(9600);
-  pinMode(pir1, INPUT);
-  pinMode(ldr, INPUT);
-  pinMode(relay1, OUTPUT);
-  pinMode(led1, OUTPUT);
-  pinMode(led2, OUTPUT);
-}
-
-void loop() {
-  bool p = (digitalRead(pir1) == HIGH);
-  bool d = (digitalRead(ldr) == HIGH);
-
-  if (p && d) {
-    // 1 && 1 -> เปิดไฟ 12VAC และ LED1
-    digitalWrite(relay1, HIGH);
-    digitalWrite(led1, HIGH);
-    digitalWrite(led2, LOW);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("TRUTH TABLE: p && d");
-    display.println("PIR1=1, LDR(Dark)=1");
-    display.println("Relay CH1 : ON");
-    display.println("LED1(GRN) : ON");
-    display.println("LED2(RED) : OFF");
-    display.println("Result    : TRUE");
-    display.display();
-    Serial.println("p && d -> Relay ON, LED1 ON");
-  }
-  else if (p && !d) {
-    // 1 && !0 -> กลางวันมีคนเดิน เปิดเฉพาะ LED1
-    digitalWrite(relay1, LOW);
-    digitalWrite(led1, HIGH);
-    digitalWrite(led2, LOW);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("TRUTH TABLE: p && !d");
-    display.println("PIR1=1, LDR(Dark)=0");
-    display.println("Relay CH1 : OFF");
-    display.println("LED1(GRN) : ON");
-    display.println("LED2(RED) : OFF");
-    display.println("Result    : DAY DETECT");
-    display.display();
-    Serial.println("p && !d -> LED1 ON");
-  }
-  else if (!p && d) {
-    // !0 && 1 -> กลางคืนไม่มีคน เปิดเฉพาะ LED2
-    digitalWrite(relay1, LOW);
-    digitalWrite(led1, LOW);
-    digitalWrite(led2, HIGH);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("TRUTH TABLE: !p && d");
-    display.println("PIR1=0, LDR(Dark)=1");
-    display.println("Relay CH1 : OFF");
-    display.println("LED1(GRN) : OFF");
-    display.println("LED2(RED) : ON");
-    display.println("Result    : NIGHT IDLE");
-    display.display();
-    Serial.println("!p && d -> LED2 ON");
-  }
-  else {
-    // !0 && !0 -> กลางวันไม่มีคน ปิดทั้งหมด
-    digitalWrite(relay1, LOW);
-    digitalWrite(led1, LOW);
-    digitalWrite(led2, LOW);
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("TRUTH TABLE: else");
-    display.println("PIR1=0, LDR(Dark)=0");
-    display.println("Relay CH1 : OFF");
-    display.println("LED1(GRN) : OFF");
-    display.println("LED2(RED) : OFF");
-    display.println("Result    : ALL OFF");
-    display.display();
-    Serial.println("else (!p && !d) -> ALL OFF");
-  }
-  delay(250);
+  delay(1500);
 }`;
       updateLineNumbers();
     });
